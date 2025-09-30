@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Login</title>
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 400px; margin: 40px auto; }
+    h1 { text-align: center; }
+    input { width: 100%; padding: 10px; margin: 8px 0; }
+    button { width: 100%; padding: 10px; margin: 8px 0; cursor: pointer; }
+    .msg { text-align: center; }
+    .error { color: red; }
+    .success { color: green; }
+  </style>
+</head>
+<body>
+  <h1>Login</h1>
+  <input type="email" id="email" placeholder="Email" autocomplete="email" />
+  <input type="password" id="password" placeholder="Password" autocomplete="current-password" />
+  <button id="login">Login</button>
+  <button id="signup">Sign Up</button>
+  <p id="status" class="msg"></p>
+
+  <script>
+    // ✅ Your Supabase project details
+    const SUPABASE_URL = "https://ywivqcxjtvmztktwlepj.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3aXZxY3hqdHZtenRrdHdsZXBqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE0NzA3NDksImV4cCI6MjA2NzA0Njc0OX0.4KUAOSRj4lnG_HCa-YNGeSReKT99qsEOgfrU9nmvh5s";
+
+    // ✅ Create client with robust auth settings
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+      },
+    });
+
+    const statusEl = document.getElementById("status");
+    const loginBtn = document.getElementById("login");
+    const signupBtn = document.getElementById("signup");
+
+    function setStatus(text, type = "") {
+      statusEl.className = `msg ${type}`;
+      statusEl.textContent = text;
+    }
+
+    async function safeAction(btn, fn) {
+      btn.disabled = true;
+      setStatus("");
+      try { await fn(); } catch (e) { setStatus(e.message || "Unexpected error", "error"); }
+      btn.disabled = false;
+    }
+
+    // ✅ Redirect if already logged in
+    (async () => {
+      const { data: { session } } = await sb.auth.getSession();
+      if (session) window.location.replace("dashboard.html");
+    })();
+
+    // ✅ Login
+    loginBtn.addEventListener("click", () => safeAction(loginBtn, async () => {
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value.trim();
+      if (!email || !password) return setStatus("Enter email and password", "error");
+
+      const { error } = await sb.auth.signInWithPassword({ email, password });
+      if (error) return setStatus(error.message, "error");
+
+      setStatus("Login successful. Redirecting…", "success");
+      window.location.replace("dashboard.html");
+    }));
+
+    // ✅ Sign up
+    signupBtn.addEventListener("click", () => safeAction(signupBtn, async () => {
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value.trim();
+      if (!email || !password) return setStatus("Enter email and password", "error");
+
+      const { error } = await sb.auth.signUp({ email, password });
+      if (error) return setStatus(error.message, "error");
+
+      setStatus("Signup successful! Check your email to confirm.", "success");
+    }));
+  </script>
+</body>
+</html>
