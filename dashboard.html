@@ -26,8 +26,8 @@
   <video id="camera" autoplay playsinline width="320" height="240" style="border:1px solid #ccc; background:#000"></video>
   <canvas id="canvas" width="320" height="240" style="display:none;"></canvas>
   <button id="captureBtn">Take Picture</button>
-  <!-- ✅ New toggle camera button -->
-  <button id="toggleCamera">Turn Camera Off</button>
+  <!-- New camera toggle button -->
+  <button id="toggleCamera">Turn Camera On</button>
 
   <h2>Your Files</h2>
   <div id="fileList"></div>
@@ -129,6 +129,16 @@
     const toggleBtn = document.getElementById("toggleCamera");
     let cameraStream = null;
 
+    // Pre-grant camera permission without streaming
+    async function requestCameraPermission() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        stream.getTracks().forEach(track => track.stop());
+      } catch (err) {
+        console.error("Camera permission error:", err);
+      }
+    }
+
     async function startCamera() {
       try {
         cameraStream = await navigator.mediaDevices.getUserMedia({ video: true });
@@ -154,7 +164,8 @@
       else startCamera();
     });
 
-    startCamera();
+    // Request permission on page load but keep camera off
+    requestCameraPermission();
 
     captureBtn.addEventListener("click", async () => {
       const ctx = canvas.getContext("2d");
