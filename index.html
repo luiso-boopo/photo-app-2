@@ -1,9 +1,102 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <meta http-equiv="refresh" content="0; url=login.html" />
-  </head>
-  <body>
-    <p>Redirecting to <a href="login.html">login page</a>...</p>
-  </body>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Photo App Home</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f7f7f7;
+      color: #333;
+    }
+    header {
+      background-color: #4CAF50;
+      color: white;
+      padding: 30px 20px;
+      text-align: center;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 2em;
+    }
+    header p {
+      margin: 10px 0 0 0;
+      font-size: 1.1em;
+    }
+    .cta-buttons {
+      margin-top: 20px;
+    }
+    .cta-buttons a {
+      display: inline-block;
+      margin: 5px;
+      padding: 12px 25px;
+      background-color: white;
+      color: #4CAF50;
+      text-decoration: none;
+      font-weight: bold;
+      border-radius: 6px;
+      transition: 0.3s;
+    }
+    .cta-buttons a:hover {
+      background-color: #e6e6e6;
+    }
+    .features {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin: 40px 20px;
+      gap: 20px;
+    }
+    .feature-card {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      width: 250px;
+      text-align: center;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    .feature-card h3 { margin-top: 0; }
+    footer {
+      text-align: center;
+      padding: 20px;
+      background: #eee;
+      font-size: 0.9em;
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>Welcome to Your Photo App</h1>
+    <p>Upload, manage, and capture photos easily.</p>
+    <div class="cta-buttons">
+      <a href="login.html">Login</a>
+      <a href="login.html">Sign Up</a>
+    </div>
+  </header>
+
+  <section class="features">
+    <div class="feature-card">
+      <h3>Upload Files</h3>
+      <p>Upload images and videos from your device quickly and securely.</p>
+    </div>
+    <div class="feature-card">
+      <h3>Live Camera</h3>
+      <p>Capture photos directly from your webcam without leaving the browser.</p>
+    </div>
+    <div class="feature-card">
+      <h3>Manage Files</h3>
+      <p>View, download, and delete your files easily from your dashboard.</p>
+    </div>
+  </section>
+
+  <footer>
+    &copy; 2025 Your Name | Built with Supabase
+  </footer>
+
+</body>
 </html>
