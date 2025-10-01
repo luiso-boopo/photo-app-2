@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,80 +6,28 @@
   <title>Dashboard</title>
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
   <style>
-    /* ===== Keep your original styling and add new polish ===== */
-    body {
-      font-family: Arial, sans-serif;
-      max-width: 900px;
-      margin: 20px auto;
-      padding: 0 15px;
-      background: #f7f7f7;
-    }
-    h1, h2 { text-align: center; color: #333; }
-    .file-card {
-      border: 1px solid #ddd;
-      border-radius: 10px;
-      padding: 10px;
-      margin: 10px;
-      display: inline-block;
-      text-align: center;
-      width: 180px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-      background: #fff;
-    }
-    img, video { max-width: 150px; max-height: 150px; display: block; margin: 0 auto 10px; border-radius: 5px; }
-    button {
-      margin-top: 5px;
-      cursor: pointer;
-      background-color: #4CAF50;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      padding: 8px 12px;
-    }
-    button:hover { background-color: #45a049; }
-
-    /* Flex layout for file list */
-    #fileList { display: flex; flex-wrap: wrap; justify-content: center; }
-
-    /* Responsive camera */
-    #camera { max-width: 100%; height: auto; border-radius: 10px; }
-
-    /* Navigation bar */
-    nav {
-      text-align: center;
-      margin-bottom: 20px;
-    }
-    nav a {
-      margin: 0 10px;
-      text-decoration: none;
-      color: #333;
-      font-weight: bold;
-    }
-    nav a:hover { color: #4CAF50; }
+    body { font-family: Arial, sans-serif; max-width: 800px; margin: 40px auto; }
+    h1 { text-align: center; }
+    .file-card { border: 1px solid #ccc; padding: 10px; margin: 10px; display: inline-block; text-align: center; width: 180px; }
+    img, video { max-width: 150px; max-height: 150px; display: block; margin: 0 auto 10px; }
+    button { margin-top: 5px; }
   </style>
 </head>
 <body>
-
-  <!-- ===== Added Navigation Bar ===== -->
-  <nav>
-    <a href="index.html">Home</a>
-    <a href="dashboard.html">Dashboard</a>
-    <button id="logout">Logout</button>
-  </nav>
-
-  <!-- ===== Welcome Message ===== -->
-  <h2>Welcome, <span id="username"></span>!</h2>
-
   <h1>Dashboard</h1>
+  <button id="logout">Logout</button>
 
   <h2>Upload a File</h2>
   <input type="file" id="fileInput" />
   <button id="uploadBtn">Upload</button>
 
   <h2>Live Camera</h2>
+  <!-- ✅ Live preview -->
   <video id="camera" autoplay playsinline width="320" height="240" style="border:1px solid #ccc; background:#000"></video>
   <canvas id="canvas" width="320" height="240" style="display:none;"></canvas>
   <button id="captureBtn">Take Picture</button>
+  <!-- ✅ New toggle camera button -->
+  <button id="toggleCamera">Turn Camera Off</button>
 
   <h2>Your Files</h2>
   <div id="fileList"></div>
@@ -97,7 +44,6 @@
     const uploadBtn = document.getElementById("uploadBtn");
     const fileList = document.getElementById("fileList");
     const logoutBtn = document.getElementById("logout");
-    const usernameSpan = document.getElementById("username");
 
     function sanitize(name) {
       return name.replace(/[^a-zA-Z0-9._-]/g, "_");
@@ -176,17 +122,39 @@
       }
     }
 
-    // Live camera setup
+    // ✅ Live camera setup
     const camera = document.getElementById("camera");
     const canvas = document.getElementById("canvas");
     const captureBtn = document.getElementById("captureBtn");
+    const toggleBtn = document.getElementById("toggleCamera");
+    let cameraStream = null;
 
-    navigator.mediaDevices.getUserMedia({ video: true })
-      .then(stream => { camera.srcObject = stream; })
-      .catch(err => {
+    async function startCamera() {
+      try {
+        cameraStream = await navigator.mediaDevices.getUserMedia({ video: true });
+        camera.srcObject = cameraStream;
+        toggleBtn.textContent = "Turn Camera Off";
+      } catch (err) {
         console.error("Camera error:", err);
         alert("Camera access denied. Please allow it in browser settings.");
-      });
+      }
+    }
+
+    function stopCamera() {
+      if (cameraStream) {
+        cameraStream.getTracks().forEach(track => track.stop());
+        camera.srcObject = null;
+        cameraStream = null;
+        toggleBtn.textContent = "Turn Camera On";
+      }
+    }
+
+    toggleBtn.addEventListener("click", () => {
+      if (cameraStream) stopCamera();
+      else startCamera();
+    });
+
+    startCamera();
 
     captureBtn.addEventListener("click", async () => {
       const ctx = canvas.getContext("2d");
@@ -238,10 +206,7 @@
     (async () => {
       const { data: { session } } = await sb.auth.getSession();
       if (!session) window.location.href = "login.html";
-      else {
-        loadFiles();
-        usernameSpan.textContent = session.user.email; // Show user email
-      }
+      else loadFiles();
     })();
   </script>
 </body>
