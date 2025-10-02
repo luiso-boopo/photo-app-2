@@ -7,10 +7,45 @@
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
   <style>
     body { font-family: Arial, sans-serif; max-width: 800px; margin: 40px auto; }
-    h1 { text-align: center; }
-    .file-card { border: 1px solid #ccc; padding: 10px; margin: 10px; display: inline-block; text-align: center; width: 180px; }
-    img, video { max-width: 150px; max-height: 150px; display: block; margin: 0 auto 10px; }
-    button { margin-top: 5px; }
+    h1, h2 { text-align: center; }
+    .file-card { 
+      border: 1px solid #ccc; 
+      padding: 10px; 
+      margin: 10px; 
+      display: inline-block; 
+      text-align: center; 
+      width: 180px; 
+      vertical-align: top;
+      border-radius: 8px;
+      box-shadow: 1px 1px 5px rgba(0,0,0,0.1);
+    }
+    img, video { 
+      max-width: 150px; 
+      max-height: 150px; 
+      display: block; 
+      margin: 0 auto 10px; 
+      border-radius: 4px;
+    }
+    button { 
+      margin-top: 5px; 
+      padding: 6px 12px; 
+      cursor: pointer; 
+      border-radius: 4px; 
+      border: 1px solid #555; 
+      background-color: #f0f0f0;
+    }
+    #cameraControls {
+      text-align: center;
+      margin-top: 10px;
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+    }
+    #camera {
+      display: block;
+      margin: 0 auto;
+      border-radius: 8px;
+    }
   </style>
 </head>
 <body>
@@ -25,9 +60,12 @@
   <!-- ✅ Live preview -->
   <video id="camera" autoplay playsinline width="320" height="240" style="border:1px solid #ccc; background:#000"></video>
   <canvas id="canvas" width="320" height="240" style="display:none;"></canvas>
-  <button id="captureBtn">Take Picture</button>
-  <!-- New camera toggle button -->
-  <button id="toggleCamera">Turn Camera On</button>
+
+  <!-- ✅ Polished button layout -->
+  <div id="cameraControls">
+    <button id="captureBtn">Take Picture</button>
+    <button id="toggleCamera">Turn Camera On</button>
+  </div>
 
   <h2>Your Files</h2>
   <div id="fileList"></div>
@@ -127,47 +165,32 @@
     const canvas = document.getElementById("canvas");
     const captureBtn = document.getElementById("captureBtn");
     const toggleBtn = document.getElementById("toggleCamera");
-    let cameraStream = null;
 
-    // Pre-grant camera permission without streaming
-    async function requestCameraPermission() {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+    let stream = null;
+    let cameraOn = false;
+
+    toggleBtn.addEventListener("click", async () => {
+      if (!cameraOn) {
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({ video: true });
+          camera.srcObject = stream;
+          toggleBtn.textContent = "Turn Camera Off";
+          cameraOn = true;
+        } catch (err) {
+          console.error("Camera error:", err);
+          alert("Camera access denied. Please allow it in browser settings.");
+        }
+      } else {
         stream.getTracks().forEach(track => track.stop());
-      } catch (err) {
-        console.error("Camera permission error:", err);
-      }
-    }
-
-    async function startCamera() {
-      try {
-        cameraStream = await navigator.mediaDevices.getUserMedia({ video: true });
-        camera.srcObject = cameraStream;
-        toggleBtn.textContent = "Turn Camera Off";
-      } catch (err) {
-        console.error("Camera error:", err);
-        alert("Camera access denied. Please allow it in browser settings.");
-      }
-    }
-
-    function stopCamera() {
-      if (cameraStream) {
-        cameraStream.getTracks().forEach(track => track.stop());
         camera.srcObject = null;
-        cameraStream = null;
         toggleBtn.textContent = "Turn Camera On";
+        cameraOn = false;
       }
-    }
-
-    toggleBtn.addEventListener("click", () => {
-      if (cameraStream) stopCamera();
-      else startCamera();
     });
 
-    // Request permission on page load but keep camera off
-    requestCameraPermission();
-
     captureBtn.addEventListener("click", async () => {
+      if (!cameraOn) return alert("Camera is off. Turn it on first!");
+
       const ctx = canvas.getContext("2d");
       ctx.drawImage(camera, 0, 0, canvas.width, canvas.height);
 
