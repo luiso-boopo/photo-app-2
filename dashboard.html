@@ -6,119 +6,110 @@
   <title>Dashboard</title>
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
   <style>
-    /* ------------------- YOUR ORIGINAL BASE STYLES ------------------- */
+    /* ------------------- YOUR ORIGINAL BASE STYLES (KEPT) ------------------- */
     body { font-family: Arial, sans-serif; max-width: 800px; margin: 40px auto; }
     h1 { text-align: center; }
-    /* The original file-card style is commented out, as it prevents the gallery view */
+    /* Original file-card style is REMOVED/COMMENTED OUT to allow the gallery view to work */
     /* .file-card { border: 1px solid #ccc; padding: 10px; margin: 10px; display: inline-block; text-align: center; width: 180px; } */
     img, video { max-width: 150px; max-height: 150px; display: block; margin: 0 auto 10px; }
     button { margin-top: 5px; }
     #settingsPanel { border:1px solid #ccc; padding:15px; margin:20px 0; background:#f9f9f9; display:none; }
 
-    /* ------------------- NEW CORE POLISHING STYLES (Minimal) ------------------- */
-    
-    /* 1. Main Container (Wider layout for gallery feel) */
-    .dashboard-container {
-        max-width: 1200px; /* Wider than original 800px body */
-        margin: 20px auto; /* Center the container */
-        padding: 20px;
-        background-color: #f8f8f8; /* Light background for contrast */
-        border-radius: 8px;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    }
+    /* ------------------- NEW DEFENSIVE GALLERY STYLES (ADDED ONLY) ------------------- */
 
-    /* 2. Google Photos Style Gallery (CSS Grid) */
+    /* 1. Use CSS Grid for Gallery Layout */
     #fileList {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); /* Responsive columns, smaller size */
-        gap: 15px; /* Space between items */
+        /* Adjusts columns to fit many small cards */
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); 
+        gap: 15px;
         margin-top: 20px;
     }
 
+    /* 2. Style the File Card to look like a small thumbnail */
     .file-card {
-        /* Replaces original file-card inline-block style for a modern look */
+        /* Overrides the original inline-block and fixed width */
         padding: 0; 
         margin: 0; 
-        border: 1px solid #e0e0e0;
+        border: 1px solid #ddd;
         border-radius: 6px;
         text-align: center;
         overflow: hidden;
-    }
-
-    .file-card img, .file-card video {
-        width: 100%; /* Fill card width */
-        height: 150px; /* Fixed height for gallery look */
-        object-fit: cover; /* Crop to fit */
-        margin: 0;
-    }
-
-    /* 3. Helper Classes for Structure */
-    .top-controls {
         display: flex;
-        justify-content: flex-end; 
-        gap: 10px;
-        margin-bottom: 20px;
+        flex-direction: column;
+        justify-content: space-between;
     }
 
-    .section-box {
-        padding: 15px;
-        border: 1px solid #ddd;
-        margin-bottom: 20px;
-        border-radius: 4px;
-        background: #fff;
+    /* 3. Make Images/Videos uniform and smaller (The Google Photos look) */
+    .file-card img, .file-card video {
+        /* Overrides original max-width/max-height */
+        width: 100%; 
+        height: 120px; /* Smaller fixed height for thumbnail */
+        object-fit: cover; /* Important: crops the image to fit the box */
+        margin: 0 0 5px 0; /* Minimal margin below the media */
     }
 
-    @media (max-width: 768px) {
-        .dashboard-container {
-            margin: 10px;
-            padding: 10px;
-        }
+    /* 4. Style the link and button inside the card */
+    .file-card a {
+        padding: 5px;
+        word-break: break-all;
+        display: block;
+        font-size: 0.8em;
+        color: #333;
+    }
+
+    .file-card button {
+        width: 100%;
+        margin-top: 5px;
+        background-color: #f44336;
+        color: white;
+        border-radius: 0;
+        padding: 8px 0;
+    }
+
+    /* Responsive adjustment */
+    @media (max-width: 600px) {
         #fileList {
-            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+        }
+        .file-card img, .file-card video {
+            height: 100px; /* Adjust height for small screens */
         }
     }
   </style>
 </head>
 <body>
-  <div class="dashboard-container"> 
-    <h1>Dashboard</h1>
+  <h1>Dashboard</h1>
 
-    <div class="top-controls"> 
-        <button id="openSettingsBtn">Settings</button>
-        <button id="logout">Logout</button>
-    </div> 
+    <button id="openSettingsBtn">Settings</button>
+  <button id="logout">Logout</button>
 
     <div id="settingsPanel">
-        <h2>Settings</h2>
-        <button id="cameraPermissionBtn">Request Camera Access</button><br><br>
+    <h2>Settings</h2>
+    <button id="cameraPermissionBtn">Request Camera Access</button><br><br>
 
         <button id="toggleCameraBtn">Turn Camera Off</button><br><br>
 
         <a href="https://supabase.com/docs/guides/auth/auth-password-reset" target="_blank">
-          <button>Change Password</button>
-        </a><br><br>
+      <button>Change Password</button>
+    </a><br><br>
 
         <p><strong>Storage Used:</strong> <span id="storageInfo">Loading...</span></p>
 
-        <button id="closeSettingsBtn">Close</button>
-    </div>
+    <button id="closeSettingsBtn">Close</button>
+  </div>
 
-    <div class="section-box"> 
-        <h2>Upload a File</h2>
-        <input type="file" id="fileInput" />
-        <button id="uploadBtn">Upload</button>
-    </div> 
+  <h2>Upload a File</h2>
+  <input type="file" id="fileInput" />
+  <button id="uploadBtn">Upload</button>
 
-    <div class="section-box"> 
-        <h2>Live Camera</h2>
-        <video id="camera" autoplay playsinline width="320" height="240" style="border:1px solid #ccc; background:#000;"></video>
-        <canvas id="canvas" width="320" height="240" style="display:none;"></canvas>
-        <button id="captureBtn">Take Picture</button>
-    </div> 
+  <h2>Live Camera</h2>
+  <video id="camera" autoplay playsinline width="320" height="240" style="border:1px solid #ccc; background:#000"></video>
+  <canvas id="canvas" width="320" height="240" style="display:none;"></canvas>
+  <button id="captureBtn">Take Picture</button>
 
-    <h2>Your Files</h2>
-    <div id="fileList"></div>
-  </div> 
+  <h2>Your Files</h2>
+  <div id="fileList"></div>
 
   <script>
     const SUPABASE_URL = "https://ywivqcxjtvmztktwlepj.supabase.co";
