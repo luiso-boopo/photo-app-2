@@ -6,7 +6,8 @@
   <title>Dashboard</title>
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
   <style>
-    /* ------------------- YOUR ORIGINAL STYLES ------------------- */
+    /* ------------------- YOUR ORIGINAL BASE STYLES (Kept as is or integrated) ------------------- */
+    /* Note: Some original body/h1/file-card styles are overridden by new, more specific styles below for polish */
     body { font-family: Arial, sans-serif; max-width: 800px; margin: 40px auto; }
     h1 { text-align: center; }
     .file-card { border: 1px solid #ccc; padding: 10px; margin: 10px; display: inline-block; text-align: center; width: 180px; }
@@ -14,136 +15,269 @@
     button { margin-top: 5px; }
     #settingsPanel { border:1px solid #ccc; padding:15px; margin:20px 0; background:#f9f9f9; display:none; }
 
-    /* ------------------- NEW POLISHING STYLES (Added) ------------------- */
+    /* ------------------- NEW PROFESSIONAL POLISHING STYLES (Added) ------------------- */
     
-    /* 1. Overall Page and Heading Styles */
+    /* 1. Overall Page Layout & Typography */
     body {
-        background-color: #f7f7f7; /* Soft background */
+        font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; /* Modern font stack */
+        background-color: #e8eaf6; /* Soft, professional background */
+        margin: 0;
+        padding: 0;
         line-height: 1.6;
-        padding: 20px; /* Add internal padding for mobile devices */
+        color: #333;
+    }
+
+    .dashboard-container { /* Main wrapper to control overall width and centering */
+        max-width: 1200px; /* Wider for gallery feel */
+        margin: 20px auto;
+        padding: 20px;
+        background-color: #fff;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    }
+
+    h1 {
+        font-size: 2.5em;
+        color: #1a237e; /* Deep blue */
+        text-align: center;
+        margin-bottom: 30px;
+        font-weight: 600;
     }
 
     h2 {
-        border-bottom: 2px solid #ddd;
-        padding-bottom: 5px;
-        margin-top: 30px;
-        color: #333;
-    }
-    
-    /* 2. Top Bar (for better button grouping) */
-    .top-controls {
-        display: flex;
-        justify-content: flex-end; /* Push buttons to the right */
-        gap: 10px; /* Space between buttons */
-        margin-bottom: 20px;
+        font-size: 1.8em;
+        color: #3f51b5; /* Medium blue */
+        border-bottom: 1px solid #c5cae9; /* Light blue border */
         padding-bottom: 10px;
-        border-bottom: 1px solid #eee;
+        margin-top: 40px;
+        margin-bottom: 20px;
     }
 
-    /* 3. Button Polishing */
+    /* 2. Top Controls (Settings & Logout) */
+    .top-controls {
+        display: flex;
+        justify-content: flex-end;
+        gap: 15px;
+        margin-bottom: 30px;
+    }
+
+    /* 3. Button Styling (General) */
     button {
-        padding: 10px 15px;
-        cursor: pointer;
+        padding: 12px 25px;
         border: none;
-        border-radius: 5px;
-        transition: background-color 0.3s;
-        font-weight: bold;
-        background-color: #007bff; /* Standard blue color */
+        border-radius: 6px;
+        font-size: 1em;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background-color 0.3s ease, transform 0.2s ease;
+        background-color: #5c6bc0; /* Indigo */
         color: white;
-        margin-top: 0; /* Override old margin-top: 5px */
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        margin-top: 0; /* Override original margin */
     }
 
     button:hover {
-        background-color: #0056b3;
+        background-color: #3f51b5; /* Darker indigo */
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    button:active {
+        transform: translateY(0);
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
     }
     
     #logout {
-        background-color: #dc3545; /* Red for destructive action */
+        background-color: #ef5350; /* Red for logout */
     }
 
     #logout:hover {
-        background-color: #c82333;
+        background-color: #e53935;
     }
 
-    /* 4. File Upload and Camera Section Styling */
+    /* 4. Settings Panel */
+    #settingsPanel {
+        background: #fdfdfd;
+        padding: 25px;
+        border-radius: 10px;
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+        margin-top: 20px;
+        margin-bottom: 30px;
+    }
+
+    #settingsPanel h2 {
+        border-bottom: 1px solid #e0e0e0;
+        padding-bottom: 10px;
+        margin-top: 0;
+        margin-bottom: 20px;
+        color: #333;
+    }
+
+    #settingsPanel button, #settingsPanel a button {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+
+    /* 5. Section Boxes (Upload & Camera) */
     .section-box {
-        border: 1px solid #ddd;
-        padding: 20px;
-        margin-bottom: 25px;
-        background: white;
+        background: #fdfdfd;
+        padding: 25px;
+        border-radius: 10px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
+        margin-bottom: 30px;
+    }
+
+    /* 6. File Input Styling */
+    input[type="file"] {
+        display: block;
+        margin-bottom: 15px;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        background-color: #f0f0f0;
+        width: calc(100% - 22px); /* Adjust for padding and border */
+    }
+
+    /* 7. Camera Feed */
+    #camera {
+        width: 100% !important; /* Make camera responsive within its container */
+        height: auto !important;
+        max-width: 320px; /* Keep original max-width */
+        display: block;
+        margin: 0 auto 20px;
+        border: 2px solid #3f51b5 !important; /* Polished border */
         border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     }
 
-    #fileInput, #uploadBtn {
-        vertical-align: middle;
-        margin-right: 10px;
-    }
-
-    /* 5. Improve File List Layout with CSS Grid (Responsive) */
+    /* 8. Google Photos Style Gallery (Images Smaller) */
     #fileList {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); /* Auto-fit as many 200px columns as possible */
-        gap: 20px; /* Space between cards */
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); /* Adjust min-width for smaller cards */
+        gap: 20px; /* Space between items */
         margin-top: 20px;
     }
 
     .file-card {
-        width: auto; /* Override fixed width */
-        margin: 0; /* Remove old margin */
-        border: 1px solid #eee;
-        border-radius: 6px;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        padding: 15px;
-        background: white;
+        background-color: #fff;
+        border: none; /* Remove default border */
+        border-radius: 8px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08); /* More prominent shadow */
+        overflow: hidden; /* Ensures content stays within rounded corners */
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between; /* Pushes delete button to bottom */
+        transition: transform 0.2s ease;
+        text-align: center;
+        padding: 0; /* Remove padding from original */
+        margin: 0; /* Remove margin from original */
     }
 
-    /* 6. Settings Panel Polish */
-    #settingsPanel {
-        border-radius: 8px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        border: none;
+    .file-card:hover {
+        transform: translateY(-3px); /* Subtle lift effect */
+    }
+
+    .file-card img, .file-card video {
+        width: 100%; /* Fill card width */
+        height: 160px; /* Fixed height for gallery look */
+        object-fit: cover; /* Crop to fit, like Google Photos */
+        display: block;
+        margin: 0 0 10px 0; /* Adjust margin */
+        border-bottom: 1px solid #eee;
+    }
+
+    .file-card a {
+        color: #3f51b5;
+        text-decoration: none;
+        font-weight: 500;
+        padding: 5px 10px;
+        display: block; /* Make link a block for better click area */
+        word-break: break-all; /* Prevents long file names from breaking layout */
+    }
+
+    .file-card a:hover {
+        text-decoration: underline;
+    }
+
+    .file-card button {
+        background-color: #ef5350; /* Red for delete button */
+        margin-top: 10px; /* Space from link */
+        border-radius: 0 0 8px 8px; /* Round bottom corners only */
+        padding: 10px;
+        width: 100%; /* Fill card width */
+        box-shadow: none; /* No extra shadow */
+    }
+
+    .file-card button:hover {
+        background-color: #e53935;
+        transform: none; /* No lift on delete button */
+    }
+
+    /* Responsive adjustments for smaller screens */
+    @media (max-width: 768px) {
+        .dashboard-container {
+            margin: 10px;
+            padding: 15px;
+        }
+        h1 {
+            font-size: 2em;
+        }
+        h2 {
+            font-size: 1.5em;
+        }
+        .top-controls {
+            flex-direction: column; /* Stack buttons on small screens */
+            align-items: stretch;
+        }
+        button {
+            width: 100%;
+        }
+        #fileList {
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); /* Even smaller cards on mobile */
+        }
     }
   </style>
 </head>
 <body>
-  <h1>Dashboard</h1>
+  <div class="dashboard-container"> 
+    <h1>Dashboard</h1>
 
     <div class="top-controls"> 
         <button id="openSettingsBtn">Settings</button>
-    <button id="logout">Logout</button>
-  </div> 
+        <button id="logout">Logout</button>
+    </div> 
 
     <div id="settingsPanel">
-    <h2>Settings</h2>
-    <button id="cameraPermissionBtn">Request Camera Access</button><br><br>
+        <h2>Settings</h2>
+        <button id="cameraPermissionBtn">Request Camera Access</button><br><br>
 
         <button id="toggleCameraBtn">Turn Camera Off</button><br><br>
 
         <a href="https://supabase.com/docs/guides/auth/auth-password-reset" target="_blank">
-      <button>Change Password</button>
-    </a><br><br>
+          <button>Change Password</button>
+        </a><br><br>
 
         <p><strong>Storage Used:</strong> <span id="storageInfo">Loading...</span></p>
 
-    <button id="closeSettingsBtn">Close</button>
-  </div>
+        <button id="closeSettingsBtn">Close</button>
+    </div>
 
     <div class="section-box"> 
-    <h2>Upload a File</h2>
-    <input type="file" id="fileInput" />
-    <button id="uploadBtn">Upload</button>
-  </div> 
+        <h2>Upload a File</h2>
+        <input type="file" id="fileInput" />
+        <button id="uploadBtn">Upload</button>
+    </div> 
 
     <div class="section-box"> 
-    <h2>Live Camera</h2>
-    <video id="camera" autoplay playsinline width="320" height="240" style="border:1px solid #ccc; background:#000; border-radius:4px;"></video>
-    <canvas id="canvas" width="320" height="240" style="display:none;"></canvas>
-    <button id="captureBtn">Take Picture</button>
-  </div> 
+        <h2>Live Camera</h2>
+        <video id="camera" autoplay playsinline width="320" height="240"></video> 
+        <canvas id="canvas" width="320" height="240" style="display:none;"></canvas>
+        <button id="captureBtn">Take Picture</button>
+    </div> 
 
-  <h2>Your Files</h2>
-  <div id="fileList"></div>
+    <h2>Your Files</h2>
+    <div id="fileList"></div>
+  </div> 
 
   <script>
     const SUPABASE_URL = "https://ywivqcxjtvmztktwlepj.supabase.co";
