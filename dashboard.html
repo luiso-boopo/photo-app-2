@@ -4,73 +4,106 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Dashboard</title>
+
+  <!-- ✅ Supabase SDK -->
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+
   <style>
-    body { font-family: Arial, sans-serif; max-width: 800px; margin: 40px auto; }
-    h1, h2 { text-align: center; }
-    .file-card { 
-      border: 1px solid #ccc; 
-      padding: 10px; 
-      margin: 10px; 
-      display: inline-block; 
-      text-align: center; 
-      width: 180px; 
-      vertical-align: top;
-      border-radius: 8px;
-      box-shadow: 1px 1px 5px rgba(0,0,0,0.1);
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 40px auto;
     }
-    img, video { 
-      max-width: 150px; 
-      max-height: 150px; 
-      display: block; 
-      margin: 0 auto 10px; 
-      border-radius: 4px;
-    }
-    button { 
-      margin-top: 5px; 
-      padding: 6px 12px; 
-      cursor: pointer; 
-      border-radius: 4px; 
-      border: 1px solid #555; 
-      background-color: #f0f0f0;
-    }
-    #cameraControls {
+
+    h1 {
       text-align: center;
-      margin-top: 10px;
-      display: flex;
-      justify-content: center;
-      gap: 10px;
     }
-    #camera {
+
+    .file-card {
+      border: 1px solid #ccc;
+      padding: 10px;
+      margin: 10px;
+      display: inline-block;
+      text-align: center;
+      width: 180px;
+    }
+
+    img, video {
+      max-width: 150px;
+      max-height: 150px;
       display: block;
-      margin: 0 auto;
-      border-radius: 8px;
+      margin: 0 auto 10px;
+    }
+
+    button {
+      margin-top: 5px;
+    }
+
+    /* ✅ Profile circle */
+    #profileCircle {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: #007bff;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      cursor: pointer;
+      margin: 10px auto;
+    }
+
+    #profileEmail {
+      text-align: center;
+      margin-bottom: 10px;
+      font-size: 14px;
     }
   </style>
 </head>
 <body>
   <h1>Dashboard</h1>
+
+  <!-- ✅ Profile Section -->
+  <div id="profileCircle">?</div>
+  <div id="profileEmail"></div>
+
+  <button id="settingsBtn">Settings</button>
+  <button id="backupBtn">Auto Backup All Photos</button>
   <button id="logout">Logout</button>
 
   <h2>Upload a File</h2>
+
   <input type="file" id="fileInput" />
   <button id="uploadBtn">Upload</button>
 
   <h2>Live Camera</h2>
-  <!-- ✅ Live preview -->
-  <video id="camera" autoplay playsinline width="320" height="240" style="border:1px solid #ccc; background:#000"></video>
-  <canvas id="canvas" width="320" height="240" style="display:none;"></canvas>
 
-  <!-- ✅ Polished button layout -->
-  <div id="cameraControls">
-    <button id="captureBtn">Take Picture</button>
-    <button id="toggleCamera">Turn Camera On</button>
-  </div>
+  <!-- ✅ Live preview -->
+  <video 
+    id="camera" 
+    autoplay 
+    playsinline 
+    width="320" 
+    height="240" 
+    style="border:1px solid #ccc; background:#000">
+  </video>
+
+  <canvas 
+    id="canvas" 
+    width="320" 
+    height="240" 
+    style="display:none;">
+  </canvas>
+
+  <button id="captureBtn">Take Picture</button>
+  <button id="toggleCameraBtn">Turn Camera On</button>
 
   <h2>Your Files</h2>
   <div id="fileList"></div>
 
   <script>
+    // ✅ Supabase setup
     const SUPABASE_URL = "https://ywivqcxjtvmztktwlepj.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3aXZxY3hqdHZtenRrdHdsZXBqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE0NzA3NDksImV4cCI6MjA2NzA0Njc0OX0.4KUAOSRj4lnG_HCa-YNGeSReKT99qsEOgfrU9nmvh5s";
 
@@ -78,20 +111,36 @@
       auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
     });
 
+    // ✅ DOM Elements
     const fileInput = document.getElementById("fileInput");
     const uploadBtn = document.getElementById("uploadBtn");
     const fileList = document.getElementById("fileList");
     const logoutBtn = document.getElementById("logout");
 
+    const profileCircle = document.getElementById("profileCircle");
+    const profileEmail = document.getElementById("profileEmail");
+    const settingsBtn = document.getElementById("settingsBtn");
+    const backupBtn = document.getElementById("backupBtn");
+
+    const camera = document.getElementById("camera");
+    const canvas = document.getElementById("canvas");
+    const captureBtn = document.getElementById("captureBtn");
+    const toggleCameraBtn = document.getElementById("toggleCameraBtn");
+
+    let cameraStream = null;
+
+    // ✅ File name sanitizer
     function sanitize(name) {
       return name.replace(/[^a-zA-Z0-9._-]/g, "_");
     }
 
+    // ✅ Logout
     logoutBtn.addEventListener("click", async () => {
       await sb.auth.signOut();
       window.location.href = "login.html";
     });
 
+    // ✅ Upload a file
     uploadBtn.addEventListener("click", async () => {
       const file = fileInput.files[0];
       if (!file) return alert("Choose a file first");
@@ -112,11 +161,15 @@
       }
     });
 
+    // ✅ Load user files
     async function loadFiles() {
       const { data: { session } } = await sb.auth.getSession();
       if (!session) return;
 
-      const { data, error } = await sb.storage.from("user-uploads").list(session.user.id, { limit: 100 });
+      const { data, error } = await sb.storage
+        .from("user-uploads")
+        .list(session.user.id, { limit: 100 });
+
       if (error) return console.error(error);
 
       fileList.innerHTML = "";
@@ -129,12 +182,14 @@
         const div = document.createElement("div");
         div.className = "file-card";
 
+        // ✅ Preview image
         if (file.name.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
           const img = document.createElement("img");
           img.src = signed?.signedUrl || "";
           div.appendChild(img);
         }
 
+        // ✅ Preview video
         if (file.name.match(/\.(mp4|mov|avi|webm)$/i)) {
           const video = document.createElement("video");
           video.src = signed?.signedUrl || "";
@@ -142,12 +197,14 @@
           div.appendChild(video);
         }
 
+        // ✅ Download link
         const link = document.createElement("a");
         link.href = signed?.signedUrl || "#";
         link.textContent = file.name;
         link.target = "_blank";
         div.appendChild(link);
 
+        // ✅ Delete button
         const delBtn = document.createElement("button");
         delBtn.textContent = "Delete";
         delBtn.onclick = async () => {
@@ -160,37 +217,29 @@
       }
     }
 
-    // ✅ Live camera setup
-    const camera = document.getElementById("camera");
-    const canvas = document.getElementById("canvas");
-    const captureBtn = document.getElementById("captureBtn");
-    const toggleBtn = document.getElementById("toggleCamera");
-
-    let stream = null;
-    let cameraOn = false;
-
-    toggleBtn.addEventListener("click", async () => {
-      if (!cameraOn) {
+    // ✅ Camera toggle
+    toggleCameraBtn.addEventListener("click", async () => {
+      if (cameraStream) {
+        // Turn off
+        cameraStream.getTracks().forEach(track => track.stop());
+        camera.srcObject = null;
+        cameraStream = null;
+        toggleCameraBtn.textContent = "Turn Camera On";
+      } else {
+        // Turn on
         try {
-          stream = await navigator.mediaDevices.getUserMedia({ video: true });
-          camera.srcObject = stream;
-          toggleBtn.textContent = "Turn Camera Off";
-          cameraOn = true;
+          cameraStream = await navigator.mediaDevices.getUserMedia({ video: true });
+          camera.srcObject = cameraStream;
+          toggleCameraBtn.textContent = "Turn Camera Off";
         } catch (err) {
           console.error("Camera error:", err);
           alert("Camera access denied. Please allow it in browser settings.");
         }
-      } else {
-        stream.getTracks().forEach(track => track.stop());
-        camera.srcObject = null;
-        toggleBtn.textContent = "Turn Camera On";
-        cameraOn = false;
       }
     });
 
+    // ✅ Capture snapshot
     captureBtn.addEventListener("click", async () => {
-      if (!cameraOn) return alert("Camera is off. Turn it on first!");
-
       const ctx = canvas.getContext("2d");
       ctx.drawImage(camera, 0, 0, canvas.width, canvas.height);
 
@@ -206,41 +255,37 @@
         if (error) {
           alert("Upload failed: " + error.message);
         } else {
-          const { data: signed } = await sb.storage
-            .from("user-uploads")
-            .createSignedUrl(path, 60 * 60);
-
-          const div = document.createElement("div");
-          div.className = "file-card";
-
-          const img = document.createElement("img");
-          img.src = signed?.signedUrl || "";
-          div.appendChild(img);
-
-          const link = document.createElement("a");
-          link.href = signed?.signedUrl || "#";
-          link.textContent = file.name;
-          link.target = "_blank";
-          div.appendChild(link);
-
-          const delBtn = document.createElement("button");
-          delBtn.textContent = "Delete";
-          delBtn.onclick = async () => {
-            await sb.storage.from("user-uploads").remove([path]);
-            loadFiles();
-          };
-          div.appendChild(delBtn);
-
-          fileList.prepend(div);
+          loadFiles();
           alert("Snapshot uploaded!");
         }
       }, "image/png");
     });
 
+    // ✅ Profile + session setup
     (async () => {
       const { data: { session } } = await sb.auth.getSession();
-      if (!session) window.location.href = "login.html";
-      else loadFiles();
+
+      if (!session) {
+        window.location.href = "login.html";
+      } else {
+        loadFiles();
+
+        // Show email
+        profileEmail.textContent = session.user.email;
+
+        // Profile circle first letter
+        profileCircle.textContent = session.user.email.charAt(0).toUpperCase();
+
+        // Settings click
+        profileCircle.addEventListener("click", () => {
+          alert("This would open settings page (you can link to a new HTML file).");
+        });
+
+        // Backup click (placeholder)
+        backupBtn.addEventListener("click", () => {
+          alert("Auto-backup all device photos is not supported in browsers, but you can select multiple files and upload.");
+        });
+      }
     })();
   </script>
 </body>
