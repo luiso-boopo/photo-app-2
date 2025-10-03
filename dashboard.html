@@ -9,28 +9,24 @@
     /* ------------------- YOUR ORIGINAL BASE STYLES (KEPT) ------------------- */
     body { font-family: Arial, sans-serif; max-width: 800px; margin: 40px auto; }
     h1 { text-align: center; }
-    /* Original file-card style is REMOVED/COMMENTED OUT to allow the gallery view to work */
-    /* .file-card { border: 1px solid #ccc; padding: 10px; margin: 10px; display: inline-block; text-align: center; width: 180px; } */
     img, video { max-width: 150px; max-height: 150px; display: block; margin: 0 auto 10px; }
     button { margin-top: 5px; }
     #settingsPanel { border:1px solid #ccc; padding:15px; margin:20px 0; background:#f9f9f9; display:none; }
 
-    /* ------------------- NEW DEFENSIVE GALLERY STYLES (ADDED ONLY) ------------------- */
+    /* ------------------- GALLERY STYLES (MODIFIED) ------------------- */
 
     /* 1. Use CSS Grid for Gallery Layout */
-    #fileList {
+    .file-grid { /* New class for the list containers (Photos/Videos) */
         display: grid;
-        /* Adjusts columns to fit many small cards */
-        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); 
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); 
         gap: 15px;
         margin-top: 20px;
     }
 
     /* 2. Style the File Card to look like a small thumbnail */
     .file-card {
-        /* Overrides the original inline-block and fixed width */
-        padding: 0; 
-        margin: 0; 
+        padding: 0; 
+        margin: 0; 
         border: 1px solid #ddd;
         border-radius: 6px;
         text-align: center;
@@ -42,11 +38,10 @@
 
     /* 3. Make Images/Videos uniform and smaller (The Google Photos look) */
     .file-card img, .file-card video {
-        /* Overrides original max-width/max-height */
-        width: 100%; 
-        height: 120px; /* Smaller fixed height for thumbnail */
-        object-fit: cover; /* Important: crops the image to fit the box */
-        margin: 0 0 5px 0; /* Minimal margin below the media */
+        width: 100%; 
+        height: 120px;
+        object-fit: cover;
+        margin: 0 0 5px 0;
     }
 
     /* 4. Style the link and button inside the card */
@@ -67,34 +62,68 @@
         padding: 8px 0;
     }
 
-    /* Responsive adjustment */
-    @media (max-width: 600px) {
-        #fileList {
-            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-        }
-        .file-card img, .file-card video {
-            height: 100px; /* Adjust height for small screens */
-        }
+    /* ------------------- NEW TAB STYLES ------------------- */
+    
+    .tab-container {
+        display: flex;
+        border-bottom: 2px solid #ccc;
+        margin-bottom: 20px;
     }
+
+    .tab-button {
+        flex-grow: 1;
+        padding: 10px 15px;
+        cursor: pointer;
+        background-color: #f4f4f4;
+        border: 1px solid #ccc;
+        border-bottom: none;
+        margin-right: 5px;
+        border-radius: 6px 6px 0 0;
+        font-weight: bold;
+        text-align: center;
+        transition: background-color 0.3s;
+    }
+
+    .tab-button:hover {
+        background-color: #e0e0e0;
+    }
+
+    .tab-button.active {
+        background-color: #fff;
+        border-bottom: 2px solid white; /* Creates the "floating" tab effect */
+        position: relative;
+        top: 2px;
+    }
+    
+    .tab-content {
+        display: none; /* Hide all content by default */
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 0 0 6px 6px;
+    }
+    
+    .tab-content.active {
+        display: block; /* Show active content */
+    }
+
   </style>
 </head>
 <body>
   <h1>Dashboard</h1>
 
-    <button id="openSettingsBtn">Settings</button>
+  <button id="openSettingsBtn">Settings</button>
   <button id="logout">Logout</button>
 
-    <div id="settingsPanel">
+  <div id="settingsPanel">
     <h2>Settings</h2>
     <button id="cameraPermissionBtn">Request Camera Access</button><br><br>
+    <button id="toggleCameraBtn">Turn Camera Off</button><br><br>
 
-        <button id="toggleCameraBtn">Turn Camera Off</button><br><br>
-
-        <a href="https://supabase.com/docs/guides/auth/auth-password-reset" target="_blank">
+    <a href="https://supabase.com/docs/guides/auth/auth-password-reset" target="_blank">
       <button>Change Password</button>
     </a><br><br>
 
-        <p><strong>Storage Used:</strong> <span id="storageInfo">Loading...</span></p>
+    <p><strong>Storage Used:</strong> <span id="storageInfo">Loading...</span></p>
 
     <button id="closeSettingsBtn">Close</button>
   </div>
@@ -103,15 +132,31 @@
   <input type="file" id="fileInput" />
   <button id="uploadBtn">Upload</button>
 
-  <h2>Live Camera</h2>
-  <video id="camera" autoplay playsinline width="320" height="240" style="border:1px solid #ccc; background:#000"></video>
-  <canvas id="canvas" width="320" height="240" style="display:none;"></canvas>
-  <button id="captureBtn">Take Picture</button>
+    
+    <div class="tab-container">
+    <div class="tab-button active" onclick="openTab(event, 'Photos')">Photos</div>
+    <div class="tab-button" onclick="openTab(event, 'LiveCam')">Live Cam</div>
+    <div class="tab-button" onclick="openTab(event, 'Videos')">Videos</div>
+  </div>
 
-  <h2>Your Files</h2>
-  <div id="fileList"></div>
+    <div id="Photos" class="tab-content active">
+    <h2>Your Photos</h2>
+    <div id="photoList" class="file-grid"></div>
+  </div>
 
-  <script>
+    <div id="LiveCam" class="tab-content">
+    <h2>Live Camera</h2>
+    <video id="camera" autoplay playsinline width="320" height="240" style="border:1px solid #ccc; background:#000; display: block; margin: 10px auto;"></video>
+    <canvas id="canvas" width="320" height="240" style="display:none;"></canvas>
+    <button id="captureBtn" style="display: block; margin: 0 auto;">Take Picture</button>
+  </div>
+
+    <div id="Videos" class="tab-content">
+    <h2>Your Videos</h2>
+    <div id="videoList" class="file-grid"></div>
+  </div>
+
+    <script>
     const SUPABASE_URL = "https://ywivqcxjtvmztktwlepj.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3aXZxY3hqdHZtenRrdHdsZXBqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE0NzA3NDksImV4cCI6MjA2NzA0Njc0OX0.4KUAOSRj4lnG_HCa-YNGeSReKT99qsEOgfrU9nmvh5s";
 
@@ -121,8 +166,35 @@
 
     const fileInput = document.getElementById("fileInput");
     const uploadBtn = document.getElementById("uploadBtn");
-    const fileList = document.getElementById("fileList");
     const logoutBtn = document.getElementById("logout");
+    
+    // NEW: Get references to the specific lists
+    const photoList = document.getElementById("photoList");
+    const videoList = document.getElementById("videoList");
+
+    // ------------------- NEW TAB FUNCTION -------------------
+    function openTab(evt, tabName) {
+      // Declare all variables
+      let i, tabcontent, tabbuttons;
+
+      // Get all elements with class="tab-content" and hide them
+      tabcontent = document.getElementsByClassName("tab-content");
+      for (i = 0; i < tabcontent.length; i++) {
+        tabcontent[i].classList.remove("active");
+      }
+
+      // Get all elements with class="tab-button" and remove the active class
+      tabbuttons = document.getElementsByClassName("tab-button");
+      for (i = 0; i < tabbuttons.length; i++) {
+        tabbuttons[i].classList.remove("active");
+      }
+
+      // Show the current tab, and add an "active" class to the button that opened the tab
+      document.getElementById(tabName).classList.add("active");
+      evt.currentTarget.classList.add("active");
+    }
+    // --------------------------------------------------------
+
 
     function sanitize(name) {
       return name.replace(/[^a-zA-Z0-9._-]/g, "_");
@@ -161,7 +233,9 @@
       const { data, error } = await sb.storage.from("user-uploads").list(session.user.id, { limit: 100 });
       if (error) return console.error(error);
 
-      fileList.innerHTML = "";
+      // Clear both lists before re-populating
+      photoList.innerHTML = "";
+      videoList.innerHTML = "";
 
       for (const file of data) {
         const { data: signed } = await sb.storage
@@ -170,36 +244,45 @@
 
         const div = document.createElement("div");
         div.className = "file-card";
-
+        
+        let targetList;
+        let isMedia = false;
+        
+        // Determine file type and target list
         if (file.name.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
           const img = document.createElement("img");
           img.src = signed?.signedUrl || "";
           div.appendChild(img);
-        }
-
-        if (file.name.match(/\.(mp4|mov|avi|webm)$/i)) {
+          targetList = photoList;
+          isMedia = true;
+        } else if (file.name.match(/\.(mp4|mov|avi|webm)$/i)) {
           const video = document.createElement("video");
           video.src = signed?.signedUrl || "";
           video.controls = true;
           div.appendChild(video);
+          targetList = videoList;
+          isMedia = true;
         }
+        
+        // Only display in a grid if it's a photo or video
+        if (isMedia) {
+          const link = document.createElement("a");
+          link.href = signed?.signedUrl || "#";
+          link.textContent = file.name;
+          link.target = "_blank";
+          div.appendChild(link);
 
-        const link = document.createElement("a");
-        link.href = signed?.signedUrl || "#";
-        link.textContent = file.name;
-        link.target = "_blank";
-        div.appendChild(link);
+          const delBtn = document.createElement("button");
+          delBtn.textContent = "Delete";
+          delBtn.onclick = async () => {
+            await sb.storage.from("user-uploads").remove([`${session.user.id}/${file.name}`]);
+            loadFiles();
+            loadStorageUsage();
+          };
+          div.appendChild(delBtn);
 
-        const delBtn = document.createElement("button");
-        delBtn.textContent = "Delete";
-        delBtn.onclick = async () => {
-          await sb.storage.from("user-uploads").remove([`${session.user.id}/${file.name}`]);
-          loadFiles();
-          loadStorageUsage();
-        };
-        div.appendChild(delBtn);
-
-        fileList.appendChild(div);
+          targetList.appendChild(div);
+        }
       }
     }
 
@@ -218,7 +301,7 @@
         })
         .catch(err => {
           console.error("Camera error:", err);
-          alert("Camera access denied. Please allow it in browser settings.");
+          // Do NOT alert on load, as it's annoying. Only alert on button click if needed.
         });
     }
 
@@ -230,9 +313,15 @@
       }
     }
 
-    startCamera(); // start on load
+    // Start camera when the page loads, but it's hidden in the LiveCam tab
+    startCamera(); 
 
     captureBtn.addEventListener("click", async () => {
+      if (!cameraStream) {
+        alert("Camera is off or access was denied. Please turn it on or grant permission in settings.");
+        return;
+      }
+      
       const ctx = canvas.getContext("2d");
       ctx.drawImage(camera, 0, 0, canvas.width, canvas.height);
 
