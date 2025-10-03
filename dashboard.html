@@ -1,267 +1,360 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Dashboard</title>
-  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-  <style>
-    body { font-family: Arial, sans-serif; max-width: 800px; margin: 40px auto; }
-    h1 { text-align: center; }
-    .file-card { border: 1px solid #ccc; padding: 10px; margin: 10px; display: inline-block; text-align: center; width: 180px; }
-    img, video { max-width: 150px; max-height: 150px; display: block; margin: 0 auto 10px; }
-    button { margin-top: 5px; }
-    #settingsPanel { border:1px solid #ccc; padding:15px; margin:20px 0; background:#f9f9f9; display:none; }
-  </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dashboard</title>
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <style>
+    /* ------------------- YOUR ORIGINAL STYLES ------------------- */
+    body { font-family: Arial, sans-serif; max-width: 800px; margin: 40px auto; }
+    h1 { text-align: center; }
+    .file-card { border: 1px solid #ccc; padding: 10px; margin: 10px; display: inline-block; text-align: center; width: 180px; }
+    img, video { max-width: 150px; max-height: 150px; display: block; margin: 0 auto 10px; }
+    button { margin-top: 5px; }
+    #settingsPanel { border:1px solid #ccc; padding:15px; margin:20px 0; background:#f9f9f9; display:none; }
+
+    /* ------------------- NEW POLISHING STYLES (Added) ------------------- */
+    
+    /* 1. Overall Page and Heading Styles */
+    body {
+        background-color: #f7f7f7; /* Soft background */
+        line-height: 1.6;
+        padding: 20px; /* Add internal padding for mobile devices */
+    }
+
+    h2 {
+        border-bottom: 2px solid #ddd;
+        padding-bottom: 5px;
+        margin-top: 30px;
+        color: #333;
+    }
+    
+    /* 2. Top Bar (for better button grouping) */
+    .top-controls {
+        display: flex;
+        justify-content: flex-end; /* Push buttons to the right */
+        gap: 10px; /* Space between buttons */
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #eee;
+    }
+
+    /* 3. Button Polishing */
+    button {
+        padding: 10px 15px;
+        cursor: pointer;
+        border: none;
+        border-radius: 5px;
+        transition: background-color 0.3s;
+        font-weight: bold;
+        background-color: #007bff; /* Standard blue color */
+        color: white;
+        margin-top: 0; /* Override old margin-top: 5px */
+    }
+
+    button:hover {
+        background-color: #0056b3;
+    }
+    
+    #logout {
+        background-color: #dc3545; /* Red for destructive action */
+    }
+
+    #logout:hover {
+        background-color: #c82333;
+    }
+
+    /* 4. File Upload and Camera Section Styling */
+    .section-box {
+        border: 1px solid #ddd;
+        padding: 20px;
+        margin-bottom: 25px;
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+
+    #fileInput, #uploadBtn {
+        vertical-align: middle;
+        margin-right: 10px;
+    }
+
+    /* 5. Improve File List Layout with CSS Grid (Responsive) */
+    #fileList {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); /* Auto-fit as many 200px columns as possible */
+        gap: 20px; /* Space between cards */
+        margin-top: 20px;
+    }
+
+    .file-card {
+        width: auto; /* Override fixed width */
+        margin: 0; /* Remove old margin */
+        border: 1px solid #eee;
+        border-radius: 6px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        padding: 15px;
+        background: white;
+    }
+
+    /* 6. Settings Panel Polish */
+    #settingsPanel {
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        border: none;
+    }
+  </style>
 </head>
 <body>
-  <h1>Dashboard</h1>
+  <h1>Dashboard</h1>
 
-  <!-- 🔧 Settings panel trigger -->
-  <button id="openSettingsBtn">Settings</button>
-  <button id="logout">Logout</button>
+    <div class="top-controls"> 
+        <button id="openSettingsBtn">Settings</button>
+    <button id="logout">Logout</button>
+  </div> 
 
-  <!-- 🔧 Settings Panel -->
-  <div id="settingsPanel">
-    <h2>Settings</h2>
-    <button id="cameraPermissionBtn">Request Camera Access</button><br><br>
+    <div id="settingsPanel">
+    <h2>Settings</h2>
+    <button id="cameraPermissionBtn">Request Camera Access</button><br><br>
 
-    <!-- ✅ Camera toggle -->
-    <button id="toggleCameraBtn">Turn Camera Off</button><br><br>
+        <button id="toggleCameraBtn">Turn Camera Off</button><br><br>
 
-    <!-- ✅ Password reset link -->
-    <a href="https://supabase.com/docs/guides/auth/auth-password-reset" target="_blank">
-      <button>Change Password</button>
-    </a><br><br>
+        <a href="https://supabase.com/docs/guides/auth/auth-password-reset" target="_blank">
+      <button>Change Password</button>
+    </a><br><br>
 
-    <!-- ✅ Storage info -->
-    <p><strong>Storage Used:</strong> <span id="storageInfo">Loading...</span></p>
+        <p><strong>Storage Used:</strong> <span id="storageInfo">Loading...</span></p>
 
-    <button id="closeSettingsBtn">Close</button>
-  </div>
+    <button id="closeSettingsBtn">Close</button>
+  </div>
 
-  <h2>Upload a File</h2>
-  <input type="file" id="fileInput" />
-  <button id="uploadBtn">Upload</button>
+    <div class="section-box"> 
+    <h2>Upload a File</h2>
+    <input type="file" id="fileInput" />
+    <button id="uploadBtn">Upload</button>
+  </div> 
 
-  <h2>Live Camera</h2>
-  <video id="camera" autoplay playsinline width="320" height="240" style="border:1px solid #ccc; background:#000"></video>
-  <canvas id="canvas" width="320" height="240" style="display:none;"></canvas>
-  <button id="captureBtn">Take Picture</button>
+    <div class="section-box"> 
+    <h2>Live Camera</h2>
+    <video id="camera" autoplay playsinline width="320" height="240" style="border:1px solid #ccc; background:#000; border-radius:4px;"></video>
+    <canvas id="canvas" width="320" height="240" style="display:none;"></canvas>
+    <button id="captureBtn">Take Picture</button>
+  </div> 
 
-  <h2>Your Files</h2>
-  <div id="fileList"></div>
+  <h2>Your Files</h2>
+  <div id="fileList"></div>
 
-  <script>
-    const SUPABASE_URL = "https://ywivqcxjtvmztktwlepj.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3aXZxY3hqdHZtenRrdHdsZXBqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE0NzA3NDksImV4cCI6MjA2NzA0Njc0OX0.4KUAOSRj4lnG_HCa-YNGeSReKT99qsEOgfrU9nmvh5s";
+  <script>
+    const SUPABASE_URL = "https://ywivqcxjtvmztktwlepj.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3aXZxY3hqdHZtenRrdHdsZXBqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE0NzA3NDksImV4cCI6MjA2NzA0Njc0OX0.4KUAOSRj4lnG_HCa-YNGeSReKT99qsEOgfrU9nmvh5s";
 
-    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
-    });
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
+    });
 
-    const fileInput = document.getElementById("fileInput");
-    const uploadBtn = document.getElementById("uploadBtn");
-    const fileList = document.getElementById("fileList");
-    const logoutBtn = document.getElementById("logout");
+    const fileInput = document.getElementById("fileInput");
+    const uploadBtn = document.getElementById("uploadBtn");
+    const fileList = document.getElementById("fileList");
+    const logoutBtn = document.getElementById("logout");
 
-    function sanitize(name) {
-      return name.replace(/[^a-zA-Z0-9._-]/g, "_");
-    }
+    function sanitize(name) {
+      return name.replace(/[^a-zA-Z0-9._-]/g, "_");
+    }
 
-    logoutBtn.addEventListener("click", async () => {
-      await sb.auth.signOut();
-      window.location.href = "login.html";
-    });
+    logoutBtn.addEventListener("click", async () => {
+      await sb.auth.signOut();
+      window.location.href = "login.html";
+    });
 
-    uploadBtn.addEventListener("click", async () => {
-      const file = fileInput.files[0];
-      if (!file) return alert("Choose a file first");
+    uploadBtn.addEventListener("click", async () => {
+      const file = fileInput.files[0];
+      if (!file) return alert("Choose a file first");
 
-      const { data: { session } } = await sb.auth.getSession();
-      if (!session) return alert("Not logged in");
+      const { data: { session } } = await sb.auth.getSession();
+      if (!session) return alert("Not logged in");
 
-      const safeName = sanitize(file.name);
-      const path = `${session.user.id}/${Date.now()}-${safeName}`;
+      const safeName = sanitize(file.name);
+      const path = `${session.user.id}/${Date.now()}-${safeName}`;
 
-      const { error } = await sb.storage.from("user-uploads").upload(path, file, { upsert: false });
+      const { error } = await sb.storage.from("user-uploads").upload(path, file, { upsert: false });
 
-      if (error) {
-        alert("Upload failed: " + error.message);
-      } else {
-        alert("File uploaded!");
-        loadFiles();
-        loadStorageUsage();
-      }
-    });
+      if (error) {
+        alert("Upload failed: " + error.message);
+      } else {
+        alert("File uploaded!");
+        loadFiles();
+        loadStorageUsage();
+      }
+    });
 
-    async function loadFiles() {
-      const { data: { session } } = await sb.auth.getSession();
-      if (!session) return;
+    async function loadFiles() {
+      const { data: { session } } = await sb.auth.getSession();
+      if (!session) return;
 
-      const { data, error } = await sb.storage.from("user-uploads").list(session.user.id, { limit: 100 });
-      if (error) return console.error(error);
+      const { data, error } = await sb.storage.from("user-uploads").list(session.user.id, { limit: 100 });
+      if (error) return console.error(error);
 
-      fileList.innerHTML = "";
+      fileList.innerHTML = "";
 
-      for (const file of data) {
-        const { data: signed } = await sb.storage
-          .from("user-uploads")
-          .createSignedUrl(`${session.user.id}/${file.name}`, 60 * 60);
+      for (const file of data) {
+        const { data: signed } = await sb.storage
+          .from("user-uploads")
+          .createSignedUrl(`${session.user.id}/${file.name}`, 60 * 60);
 
-        const div = document.createElement("div");
-        div.className = "file-card";
+        const div = document.createElement("div");
+        div.className = "file-card";
 
-        if (file.name.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
-          const img = document.createElement("img");
-          img.src = signed?.signedUrl || "";
-          div.appendChild(img);
-        }
+        if (file.name.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
+          const img = document.createElement("img");
+          img.src = signed?.signedUrl || "";
+          div.appendChild(img);
+        }
 
-        if (file.name.match(/\.(mp4|mov|avi|webm)$/i)) {
-          const video = document.createElement("video");
-          video.src = signed?.signedUrl || "";
-          video.controls = true;
-          div.appendChild(video);
-        }
+        if (file.name.match(/\.(mp4|mov|avi|webm)$/i)) {
+          const video = document.createElement("video");
+          video.src = signed?.signedUrl || "";
+          video.controls = true;
+          div.appendChild(video);
+        }
 
-        const link = document.createElement("a");
-        link.href = signed?.signedUrl || "#";
-        link.textContent = file.name;
-        link.target = "_blank";
-        div.appendChild(link);
+        const link = document.createElement("a");
+        link.href = signed?.signedUrl || "#";
+        link.textContent = file.name;
+        link.target = "_blank";
+        div.appendChild(link);
 
-        const delBtn = document.createElement("button");
-        delBtn.textContent = "Delete";
-        delBtn.onclick = async () => {
-          await sb.storage.from("user-uploads").remove([`${session.user.id}/${file.name}`]);
-          loadFiles();
-          loadStorageUsage();
-        };
-        div.appendChild(delBtn);
+        const delBtn = document.createElement("button");
+        delBtn.textContent = "Delete";
+        delBtn.onclick = async () => {
+          await sb.storage.from("user-uploads").remove([`${session.user.id}/${file.name}`]);
+          loadFiles();
+          loadStorageUsage();
+        };
+        div.appendChild(delBtn);
 
-        fileList.appendChild(div);
-      }
-    }
+        fileList.appendChild(div);
+      }
+    }
 
-    // ✅ Live camera setup
-    const camera = document.getElementById("camera");
-    const canvas = document.getElementById("canvas");
-    const captureBtn = document.getElementById("captureBtn");
+    // ✅ Live camera setup
+    const camera = document.getElementById("camera");
+    const canvas = document.getElementById("canvas");
+    const captureBtn = document.getElementById("captureBtn");
 
-    let cameraStream = null;
+    let cameraStream = null;
 
-    function startCamera() {
-      navigator.mediaDevices.getUserMedia({ video: true })
-        .then(stream => { 
-          camera.srcObject = stream; 
-          cameraStream = stream;
-        })
-        .catch(err => {
-          console.error("Camera error:", err);
-          alert("Camera access denied. Please allow it in browser settings.");
-        });
-    }
+    function startCamera() {
+      navigator.mediaDevices.getUserMedia({ video: true })
+        .then(stream => { 
+          camera.srcObject = stream; 
+          cameraStream = stream;
+        })
+        .catch(err => {
+          console.error("Camera error:", err);
+          alert("Camera access denied. Please allow it in browser settings.");
+        });
+    }
 
-    function stopCamera() {
-      if (cameraStream) {
-        cameraStream.getTracks().forEach(track => track.stop());
-        camera.srcObject = null;
-        cameraStream = null;
-      }
-    }
+    function stopCamera() {
+      if (cameraStream) {
+        cameraStream.getTracks().forEach(track => track.stop());
+        camera.srcObject = null;
+        cameraStream = null;
+      }
+    }
 
-    startCamera(); // start on load
+    startCamera(); // start on load
 
-    captureBtn.addEventListener("click", async () => {
-      const ctx = canvas.getContext("2d");
-      ctx.drawImage(camera, 0, 0, canvas.width, canvas.height);
+    captureBtn.addEventListener("click", async () => {
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(camera, 0, 0, canvas.width, canvas.height);
 
-      canvas.toBlob(async (blob) => {
-        const file = new File([blob], `camera-${Date.now()}.png`, { type: "image/png" });
+      canvas.toBlob(async (blob) => {
+        const file = new File([blob], `camera-${Date.now()}.png`, { type: "image/png" });
 
-        const { data: { session } } = await sb.auth.getSession();
-        if (!session) return alert("Not logged in");
+        const { data: { session } } = await sb.auth.getSession();
+        if (!session) return alert("Not logged in");
 
-        const path = `${session.user.id}/${file.name}`;
-        const { error } = await sb.storage.from("user-uploads").upload(path, file);
+        const path = `${session.user.id}/${file.name}`;
+        const { error } = await sb.storage.from("user-uploads").upload(path, file);
 
-        if (error) {
-          alert("Upload failed: " + error.message);
-        } else {
-          loadFiles();
-          loadStorageUsage();
-          alert("Snapshot uploaded!");
-        }
-      }, "image/png");
-    });
+        if (error) {
+          alert("Upload failed: " + error.message);
+        } else {
+          loadFiles();
+          loadStorageUsage();
+          alert("Snapshot uploaded!");
+        }
+      }, "image/png");
+    });
 
-    // ✅ Settings panel logic
-    const openSettingsBtn = document.getElementById("openSettingsBtn");
-    const settingsPanel = document.getElementById("settingsPanel");
-    const closeSettingsBtn = document.getElementById("closeSettingsBtn");
-    const cameraPermissionBtn = document.getElementById("cameraPermissionBtn");
-    const toggleCameraBtn = document.getElementById("toggleCameraBtn");
-    const storageInfo = document.getElementById("storageInfo");
+    // ✅ Settings panel logic
+    const openSettingsBtn = document.getElementById("openSettingsBtn");
+    const settingsPanel = document.getElementById("settingsPanel");
+    const closeSettingsBtn = document.getElementById("closeSettingsBtn");
+    const cameraPermissionBtn = document.getElementById("cameraPermissionBtn");
+    const toggleCameraBtn = document.getElementById("toggleCameraBtn");
+    const storageInfo = document.getElementById("storageInfo");
 
-    openSettingsBtn.addEventListener("click", () => {
-      settingsPanel.style.display = "block";
-      loadStorageUsage();
-    });
+    openSettingsBtn.addEventListener("click", () => {
+      settingsPanel.style.display = "block";
+      loadStorageUsage();
+    });
 
-    closeSettingsBtn.addEventListener("click", () => {
-      settingsPanel.style.display = "none";
-    });
+    closeSettingsBtn.addEventListener("click", () => {
+      settingsPanel.style.display = "none";
+    });
 
-    cameraPermissionBtn.addEventListener("click", async () => {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-        alert("✅ Camera access granted!");
-        stream.getTracks().forEach(track => track.stop());
-      } catch (err) {
-        alert("❌ Camera access denied.");
-      }
-    });
+    cameraPermissionBtn.addEventListener("click", async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        alert("✅ Camera access granted!");
+        stream.getTracks().forEach(track => track.stop());
+      } catch (err) {
+        alert("❌ Camera access denied.");
+      }
+    });
 
-    // ✅ Camera toggle
-    toggleCameraBtn.addEventListener("click", () => {
-      if (cameraStream) {
-        stopCamera();
-        toggleCameraBtn.textContent = "Turn Camera On";
-      } else {
-        startCamera();
-        toggleCameraBtn.textContent = "Turn Camera Off";
-      }
-    });
+    // ✅ Camera toggle
+    toggleCameraBtn.addEventListener("click", () => {
+      if (cameraStream) {
+        stopCamera();
+        toggleCameraBtn.textContent = "Turn Camera On";
+      } else {
+        startCamera();
+        toggleCameraBtn.textContent = "Turn Camera Off";
+      }
+    });
 
-    // ✅ Storage usage
-    const MAX_STORAGE = 5 * 1024 * 1024 * 1024; // 5 GB total quota
+    // ✅ Storage usage
+    const MAX_STORAGE = 5 * 1024 * 1024 * 1024; // 5 GB total quota
 
-    async function loadStorageUsage() {
-      const { data: { session } } = await sb.auth.getSession();
-      if (!session) return;
+    async function loadStorageUsage() {
+      const { data: { session } } = await sb.auth.getSession();
+      if (!session) return;
 
-      const { data, error } = await sb.storage.from("user-uploads").list(session.user.id, { limit: 100 });
-      if (error) return console.error(error);
+      const { data, error } = await sb.storage.from("user-uploads").list(session.user.id, { limit: 100 });
+      if (error) return console.error(error);
 
-      let totalBytes = 0;
-      for (const file of data) {
-        totalBytes += file.metadata?.size || 0;
-      }
+      let totalBytes = 0;
+      for (const file of data) {
+        totalBytes += file.metadata?.size || 0;
+      }
 
-      const usedMB = (totalBytes / (1024*1024)).toFixed(2);
-      const totalMB = (MAX_STORAGE / (1024*1024)).toFixed(0);
-      storageInfo.textContent = `${usedMB} MB / ${totalMB} MB used`;
-    }
+      const usedMB = (totalBytes / (1024*1024)).toFixed(2);
+      const totalMB = (MAX_STORAGE / (1024*1024)).toFixed(0);
+      storageInfo.textContent = `${usedMB} MB / ${totalMB} MB used`;
+    }
 
-    (async () => {
-      const { data: { session } } = await sb.auth.getSession();
-      if (!session) window.location.href = "login.html";
-      else {
-        loadFiles();
-        loadStorageUsage();
-      }
-    })();
-  </script>
+    (async () => {
+      const { data: { session } } = await sb.auth.getSession();
+      if (!session) window.location.href = "login.html";
+      else {
+        loadFiles();
+        loadStorageUsage();
+      }
+    })();
+  </script>
 </body>
 </html>
