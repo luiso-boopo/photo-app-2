@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -26,10 +25,18 @@
   <div id="settingsPanel">
     <h2>Settings</h2>
     <button id="cameraPermissionBtn">Request Camera Access</button><br><br>
+
+    <!-- ✅ Camera toggle -->
+    <button id="toggleCameraBtn">Turn Camera Off</button><br><br>
+
+    <!-- ✅ Password reset link -->
     <a href="https://supabase.com/docs/guides/auth/auth-password-reset" target="_blank">
       <button>Change Password</button>
     </a><br><br>
+
+    <!-- ✅ Storage info -->
     <p><strong>Storage Used:</strong> <span id="storageInfo">Loading...</span></p>
+
     <button id="closeSettingsBtn">Close</button>
   </div>
 
@@ -84,6 +91,7 @@
       } else {
         alert("File uploaded!");
         loadFiles();
+        loadStorageUsage();
       }
     });
 
@@ -128,6 +136,7 @@
         delBtn.onclick = async () => {
           await sb.storage.from("user-uploads").remove([`${session.user.id}/${file.name}`]);
           loadFiles();
+          loadStorageUsage();
         };
         div.appendChild(delBtn);
 
@@ -140,12 +149,29 @@
     const canvas = document.getElementById("canvas");
     const captureBtn = document.getElementById("captureBtn");
 
-    navigator.mediaDevices.getUserMedia({ video: true })
-      .then(stream => { camera.srcObject = stream; })
-      .catch(err => {
-        console.error("Camera error:", err);
-        alert("Camera access denied. Please allow it in browser settings.");
-      });
+    let cameraStream = null;
+
+    function startCamera() {
+      navigator.mediaDevices.getUserMedia({ video: true })
+        .then(stream => { 
+          camera.srcObject = stream; 
+          cameraStream = stream;
+        })
+        .catch(err => {
+          console.error("Camera error:", err);
+          alert("Camera access denied. Please allow it in browser settings.");
+        });
+    }
+
+    function stopCamera() {
+      if (cameraStream) {
+        cameraStream.getTracks().forEach(track => track.stop());
+        camera.srcObject = null;
+        cameraStream = null;
+      }
+    }
+
+    startCamera(); // start on load
 
     captureBtn.addEventListener("click", async () => {
       const ctx = canvas.getContext("2d");
@@ -163,32 +189,8 @@
         if (error) {
           alert("Upload failed: " + error.message);
         } else {
-          const { data: signed } = await sb.storage
-            .from("user-uploads")
-            .createSignedUrl(path, 60 * 60);
-
-          const div = document.createElement("div");
-          div.className = "file-card";
-
-          const img = document.createElement("img");
-          img.src = signed?.signedUrl || "";
-          div.appendChild(img);
-
-          const link = document.createElement("a");
-          link.href = signed?.signedUrl || "#";
-          link.textContent = file.name;
-          link.target = "_blank";
-          div.appendChild(link);
-
-          const delBtn = document.createElement("button");
-          delBtn.textContent = "Delete";
-          delBtn.onclick = async () => {
-            await sb.storage.from("user-uploads").remove([path]);
-            loadFiles();
-          };
-          div.appendChild(delBtn);
-
-          fileList.prepend(div);
+          loadFiles();
+          loadStorageUsage();
           alert("Snapshot uploaded!");
         }
       }, "image/png");
@@ -199,10 +201,12 @@
     const settingsPanel = document.getElementById("settingsPanel");
     const closeSettingsBtn = document.getElementById("closeSettingsBtn");
     const cameraPermissionBtn = document.getElementById("cameraPermissionBtn");
+    const toggleCameraBtn = document.getElementById("toggleCameraBtn");
     const storageInfo = document.getElementById("storageInfo");
 
     openSettingsBtn.addEventListener("click", () => {
       settingsPanel.style.display = "block";
+      loadStorageUsage();
     });
 
     closeSettingsBtn.addEventListener("click", () => {
@@ -219,6 +223,20 @@
       }
     });
 
+    // ✅ Camera toggle
+    toggleCameraBtn.addEventListener("click", () => {
+      if (cameraStream) {
+        stopCamera();
+        toggleCameraBtn.textContent = "Turn Camera On";
+      } else {
+        startCamera();
+        toggleCameraBtn.textContent = "Turn Camera Off";
+      }
+    });
+
+    // ✅ Storage usage
+    const MAX_STORAGE = 5 * 1024 * 1024 * 1024; // 5 GB total quota
+
     async function loadStorageUsage() {
       const { data: { session } } = await sb.auth.getSession();
       if (!session) return;
@@ -231,16 +249,18 @@
         totalBytes += file.metadata?.size || 0;
       }
 
-      const mb = (totalBytes / (1024*1024)).toFixed(2);
-      storageInfo.textContent = `${mb} MB used`;
+      const usedMB = (totalBytes / (1024*1024)).toFixed(2);
+      const totalMB = (MAX_STORAGE / (1024*1024)).toFixed(0);
+      storageInfo.textContent = `${usedMB} MB / ${totalMB} MB used`;
     }
-
-    loadStorageUsage();
 
     (async () => {
       const { data: { session } } = await sb.auth.getSession();
       if (!session) window.location.href = "login.html";
-      else loadFiles();
+      else {
+        loadFiles();
+        loadStorageUsage();
+      }
     })();
   </script>
 </body>
