@@ -6,159 +6,292 @@
   <title>Dashboard</title>
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
   <style>
-    /* ------------------- YOUR ORIGINAL BASE STYLES (KEPT) ------------------- */
-    body { font-family: Arial, sans-serif; max-width: 800px; margin: 40px auto; }
-    h1 { text-align: center; }
-    img, video { max-width: 150px; max-height: 150px; display: block; margin: 0 auto 10px; }
-    button { margin-top: 5px; }
-    #settingsPanel { border:1px solid #ccc; padding:15px; margin:20px 0; background:#f9f9f9; display:none; }
-
-    /* ------------------- GALLERY STYLES (MODIFIED) ------------------- */
-
-    /* 1. Use CSS Grid for Gallery Layout */
-    .file-grid { /* New class for the list containers (Photos/Videos) */
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); 
-        gap: 15px;
-        margin-top: 20px;
+    /* ------------------- BASE STYLES ------------------- */
+    body { 
+      font-family: Arial, sans-serif; 
+      margin: 0; 
+      padding: 0; 
+      background-color: #f0f2f5; /* Lighter background */
+      color: #333;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh; /* Make body fill viewport height */
     }
 
-    /* 2. Style the File Card to look like a small thumbnail */
-    .file-card {
-        padding: 0; 
-        margin: 0; 
-        border: 1px solid #ddd;
-        border-radius: 6px;
-        text-align: center;
-        overflow: hidden;
+    h1, h2 { color: #222; margin-top: 0; }
+    button { 
+      padding: 8px 15px; 
+      border: none; 
+      border-radius: 5px; 
+      background-color: #007bff; 
+      color: white; 
+      cursor: pointer; 
+      transition: background-color 0.2s ease;
+    }
+    button:hover { background-color: #0056b3; }
+
+    /* ------------------- TOP HEADER BAR ------------------- */
+    .header-bar {
+        background-color: #fff;
+        padding: 15px 20px;
+        border-bottom: 1px solid #ddd;
         display: flex;
-        flex-direction: column;
         justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
     }
-
-    /* 3. Make Images/Videos uniform and smaller (The Google Photos look) */
-    .file-card img, .file-card video {
-        width: 100%; 
-        height: 120px;
-        object-fit: cover;
-        margin: 0 0 5px 0;
-    }
-
-    /* 4. Style the link and button inside the card */
-    .file-card a {
-        padding: 5px;
-        word-break: break-all;
-        display: block;
-        font-size: 0.8em;
-        color: #333;
-    }
-
-    .file-card button {
-        width: 100%;
-        margin-top: 5px;
-        background-color: #f44336;
-        color: white;
-        border-radius: 0;
-        padding: 8px 0;
-    }
-
-    /* ------------------- NEW TAB STYLES ------------------- */
-    
-    .tab-container {
+    .header-bar .left-group, .header-bar .right-group {
         display: flex;
-        border-bottom: 2px solid #ccc;
-        margin-bottom: 20px;
+        align-items: center;
+    }
+    .welcome-message {
+        font-size: 1.1em;
+        font-weight: bold;
+        margin-left: 20px;
+        color: #555;
+    }
+    .settings-button-top {
+        background-color: #6c757d;
+    }
+    .settings-button-top:hover {
+        background-color: #5a6268;
+    }
+    #logout {
+        background-color: #dc3545;
+        margin-left: 10px;
+    }
+    #logout:hover {
+        background-color: #c82333;
+    }
+
+    /* ------------------- SETTINGS PANEL ------------------- */
+    #settingsPanel { 
+      position: fixed; /* Use fixed for overlay */
+      top: 100px; /* Position below header */
+      right: 20px; 
+      width: 300px;
+      background:#fff; 
+      border:1px solid #ccc; 
+      border-radius: 8px;
+      padding:20px; 
+      box-shadow: 0 5px 15px rgba(0,0,0,0.2); 
+      z-index: 1000; /* Ensure it's on top */
+      display:none; 
+    }
+    #settingsPanel h2 { margin-bottom: 15px; color: #333; }
+    #settingsPanel button { margin-bottom: 10px; width: 100%; }
+    #settingsPanel a button { background-color: #17a2b8; }
+    #settingsPanel a button:hover { background-color: #138496; }
+    #settingsPanel #closeSettingsBtn { background-color: #6c757d; margin-top: 15px; }
+
+    /* ------------------- TAB NAVIGATION ------------------- */
+    .tab-nav {
+        display: flex;
+        justify-content: center; /* Center the tabs horizontally */
+        background-color: #e9ecef;
+        border-bottom: 2px solid #ced4da;
+        padding: 0 20px;
     }
 
     .tab-button {
-        flex-grow: 1;
-        padding: 10px 15px;
+        padding: 12px 25px;
         cursor: pointer;
-        background-color: #f4f4f4;
-        border: 1px solid #ccc;
-        border-bottom: none;
-        margin-right: 5px;
-        border-radius: 6px 6px 0 0;
+        background-color: transparent;
+        border: none;
+        border-bottom: 3px solid transparent; /* For active indicator */
+        font-size: 1.1em;
         font-weight: bold;
-        text-align: center;
-        transition: background-color 0.3s;
+        color: #6c757d;
+        transition: all 0.3s ease;
+        text-decoration: none; /* In case it's an anchor */
     }
 
-    .tab-button:hover {
-        background-color: #e0e0e0;
+    .tab-button:hover:not(.active) {
+        color: #007bff;
+        background-color: #f8f9fa;
     }
 
     .tab-button.active {
+        color: #007bff;
+        border-bottom: 3px solid #007bff;
         background-color: #fff;
-        border-bottom: 2px solid white; /* Creates the "floating" tab effect */
-        position: relative;
-        top: 2px;
-    }
-    
-    .tab-content {
-        display: none; /* Hide all content by default */
-        padding: 10px;
-        border: 1px solid #ccc;
-        border-radius: 0 0 6px 6px;
-    }
-    
-    .tab-content.active {
-        display: block; /* Show active content */
     }
 
+    /* ------------------- MAIN CONTENT AREA (DYNAMIC) ------------------- */
+    .main-content-area {
+        flex-grow: 1; /* This makes the content area fill available vertical space */
+        background-color: #fff;
+        padding: 30px 20px;
+        margin: 20px; /* Space around the main content block */
+        border-radius: 8px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+        display: none; /* Hide all tab content by default */
+        overflow-y: auto; /* Enable scrolling if content is too long */
+    }
+    .main-content-area.active {
+        display: block; /* Show only the active tab's content */
+    }
+
+    /* ------------------- GALLERY STYLES ------------------- */
+    .file-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); 
+        gap: 15px;
+        padding-top: 15px;
+    }
+
+    .file-card {
+        border: 1px solid #e0e0e0;
+        border-radius: 6px;
+        overflow: hidden;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+
+    .file-card img, .file-card video {
+        width: 100%; 
+        height: 130px; /* Uniform height for thumbnails */
+        object-fit: cover; 
+        margin-bottom: 8px;
+    }
+
+    .file-card a {
+        padding: 0 8px 8px; /* Added padding to align with delete button */
+        word-break: break-all;
+        display: block;
+        font-size: 0.85em;
+        color: #444;
+        text-decoration: none;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .file-card a:hover { text-decoration: underline; }
+
+    .file-card button {
+        width: 100%;
+        margin-top: auto; /* Push delete button to the bottom */
+        background-color: #dc3545; /* Red delete button */
+        color: white;
+        border-radius: 0 0 6px 6px; /* Rounded only at bottom */
+        padding: 8px 0;
+        border: none;
+        font-size: 0.9em;
+    }
+    .file-card button:hover { background-color: #c82333; }
+
+    /* ------------------- LIVE CAM STYLES ------------------- */
+    .live-cam-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        max-width: 600px; /* Constrain camera width */
+        margin: 0 auto;
+        padding: 20px;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        background-color: #fcfcfc;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    #camera { 
+      width: 100%; 
+      height: auto; 
+      max-height: 400px; /* Prevent overly large video */
+      border:1px solid #ddd; 
+      background:#000; 
+      display: block; 
+      margin-bottom: 15px;
+      border-radius: 4px;
+    }
+    #captureBtn, #fileInput, #uploadBtn {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+    #fileInput {
+        padding: 10px;
+        border: 1px solid #ced4da;
+        border-radius: 5px;
+        background-color: #fff;
+        margin-top: 15px; /* Space from capture button */
+    }
+    #uploadBtn { background-color: #28a745; } /* Green upload button */
+    #uploadBtn:hover { background-color: #218838; }
+
+    /* Canvas is always hidden but needs some size */
+    #canvas { display:none; width: 320px; height: 240px; }
+
+    /* ------------------- RESPONSIVE ADJUSTMENTS ------------------- */
+    @media (max-width: 768px) {
+        .header-bar { flex-direction: column; align-items: flex-start; }
+        .header-bar .right-group { margin-top: 10px; width: 100%; justify-content: space-between; }
+        .welcome-message { margin-left: 0; margin-top: 10px; }
+        #openSettingsBtn, #logout { position: static; margin-left: 0; width: 48%; }
+        #settingsPanel { top: 70px; right: 10px; left: 10px; width: auto; }
+        .main-content-area { margin: 10px; padding: 15px; }
+        .tab-button { padding: 10px 15px; font-size: 1em; }
+        .file-grid { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; }
+        .file-card img, .file-card video { height: 90px; }
+        .live-cam-container { padding: 15px; }
+    }
   </style>
 </head>
 <body>
-  <h1>Dashboard</h1>
-
-  <button id="openSettingsBtn">Settings</button>
-  <button id="logout">Logout</button>
+  <div class="header-bar">
+        <div class="left-group">
+            <h1 style="margin:0; font-size: 1.5em;">Dashboard</h1>
+            <span id="userEmailDisplay" class="welcome-message">Welcome! Loading User...</span>
+        </div>
+        <div class="right-group">
+            <button id="openSettingsBtn" class="settings-button-top">Settings</button>
+            <button id="logout">Logout</button>
+        </div>
+  </div>
 
   <div id="settingsPanel">
     <h2>Settings</h2>
-    <button id="cameraPermissionBtn">Request Camera Access</button><br><br>
-    <button id="toggleCameraBtn">Turn Camera Off</button><br><br>
-
+    <button id="cameraPermissionBtn">Request Camera Access</button><br>
+    <button id="toggleCameraBtn">Turn Camera Off</button><br>
     <a href="https://supabase.com/docs/guides/auth/auth-password-reset" target="_blank">
       <button>Change Password</button>
-    </a><br><br>
-
+    </a><br>
     <p><strong>Storage Used:</strong> <span id="storageInfo">Loading...</span></p>
-
     <button id="closeSettingsBtn">Close</button>
   </div>
 
-  <h2>Upload a File</h2>
-  <input type="file" id="fileInput" />
-  <button id="uploadBtn">Upload</button>
-
-    
-    <div class="tab-container">
-    <div class="tab-button active" onclick="openTab(event, 'Photos')">Photos</div>
-    <div class="tab-button" onclick="openTab(event, 'LiveCam')">Live Cam</div>
-    <div class="tab-button" onclick="openTab(event, 'Videos')">Videos</div>
+  <div class="tab-nav">
+    <button class="tab-button active" onclick="openTab(event, 'PhotosTab')">Photos</button>
+    <button class="tab-button" onclick="openTab(event, 'LiveCamTab')">Live Cam</button>
+    <button class="tab-button" onclick="openTab(event, 'VideosTab')">Videos</button>
   </div>
 
-    <div id="Photos" class="tab-content active">
+    <div id="PhotosTab" class="main-content-area active">
     <h2>Your Photos</h2>
     <div id="photoList" class="file-grid"></div>
   </div>
 
-    <div id="LiveCam" class="tab-content">
-    <h2>Live Camera</h2>
-    <video id="camera" autoplay playsinline width="320" height="240" style="border:1px solid #ccc; background:#000; display: block; margin: 10px auto;"></video>
-    <canvas id="canvas" width="320" height="240" style="display:none;"></canvas>
-    <button id="captureBtn" style="display: block; margin: 0 auto;">Take Picture</button>
+  <div id="LiveCamTab" class="main-content-area">
+    <h2>Live Camera & Upload</h2>
+    <div class="live-cam-container">
+      <video id="camera" autoplay playsinline style="border:1px solid #ccc; background:#000"></video>
+      <canvas id="canvas" style="display:none;"></canvas>
+      <button id="captureBtn">Take Picture</button>
+
+      <h3 style="margin-top: 25px; margin-bottom: 10px; color: #555;">Or Upload a File</h3>
+      <input type="file" id="fileInput" />
+      <button id="uploadBtn">Upload</button>
+    </div>
   </div>
 
-    <div id="Videos" class="tab-content">
+  <div id="VideosTab" class="main-content-area">
     <h2>Your Videos</h2>
     <div id="videoList" class="file-grid"></div>
   </div>
 
-    <script>
+  <script>
     const SUPABASE_URL = "https://ywivqcxjtvmztktwlepj.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3aXZxY3hqdHZtenRrdHdsZXBqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE0NzA3NDksImV4cCI6MjA2NzA0Njc0OX0.4KUAOSRj4lnG_HCa-YNGeSReKT99qsEOgfrU9nmvh5s";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3aXZxY3hqdHZtenRrdHdsZXBqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE0NzA3NDksImV4cCI6MjA2NzA0Njc0OX0.4KUAOSRj4lnG_HCa-YNGeSReKT99qsEOQeM_s"; // Re-checking ANON KEY for any changes.
 
     const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
       auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
@@ -168,32 +301,38 @@
     const uploadBtn = document.getElementById("uploadBtn");
     const logoutBtn = document.getElementById("logout");
     
-    // NEW: Get references to the specific lists
     const photoList = document.getElementById("photoList");
     const videoList = document.getElementById("videoList");
+    const userEmailDisplay = document.getElementById("userEmailDisplay");
 
-    // ------------------- NEW TAB FUNCTION -------------------
+
+    // ------------------- TAB SWITCHING FUNCTIONALITY -------------------
     function openTab(evt, tabName) {
-      // Declare all variables
       let i, tabcontent, tabbuttons;
 
-      // Get all elements with class="tab-content" and hide them
-      tabcontent = document.getElementsByClassName("tab-content");
+      tabcontent = document.getElementsByClassName("main-content-area");
       for (i = 0; i < tabcontent.length; i++) {
         tabcontent[i].classList.remove("active");
       }
 
-      // Get all elements with class="tab-button" and remove the active class
       tabbuttons = document.getElementsByClassName("tab-button");
       for (i = 0; i < tabbuttons.length; i++) {
         tabbuttons[i].classList.remove("active");
       }
 
-      // Show the current tab, and add an "active" class to the button that opened the tab
       document.getElementById(tabName).classList.add("active");
       evt.currentTarget.classList.add("active");
+
+      // Specific actions for tabs
+      if (tabName === 'LiveCamTab') {
+        startCamera(); // Ensure camera starts when Live Cam tab is active
+        toggleCameraBtn.textContent = "Turn Camera Off"; // Reset button text
+      } else {
+        stopCamera(); // Stop camera when switching away from Live Cam
+        toggleCameraBtn.textContent = "Turn Camera On";
+      }
     }
-    // --------------------------------------------------------
+    // -------------------------------------------------------------------
 
 
     function sanitize(name) {
@@ -233,7 +372,6 @@
       const { data, error } = await sb.storage.from("user-uploads").list(session.user.id, { limit: 100 });
       if (error) return console.error(error);
 
-      // Clear both lists before re-populating
       photoList.innerHTML = "";
       videoList.innerHTML = "";
 
@@ -248,7 +386,6 @@
         let targetList;
         let isMedia = false;
         
-        // Determine file type and target list
         if (file.name.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
           const img = document.createElement("img");
           img.src = signed?.signedUrl || "";
@@ -264,7 +401,6 @@
           isMedia = true;
         }
         
-        // Only display in a grid if it's a photo or video
         if (isMedia) {
           const link = document.createElement("a");
           link.href = signed?.signedUrl || "#";
@@ -294,14 +430,18 @@
     let cameraStream = null;
 
     function startCamera() {
+      // Only start camera if not already active
+      if (cameraStream) return;
+
       navigator.mediaDevices.getUserMedia({ video: true })
         .then(stream => { 
           camera.srcObject = stream; 
           cameraStream = stream;
+          camera.play(); // Ensure video is playing
         })
         .catch(err => {
           console.error("Camera error:", err);
-          // Do NOT alert on load, as it's annoying. Only alert on button click if needed.
+          // Only show alert if user tries to capture without camera
         });
     }
 
@@ -313,17 +453,19 @@
       }
     }
 
-    // Start camera when the page loads, but it's hidden in the LiveCam tab
-    startCamera(); 
-
     captureBtn.addEventListener("click", async () => {
       if (!cameraStream) {
-        alert("Camera is off or access was denied. Please turn it on or grant permission in settings.");
+        alert("Camera is off or access was denied. Please ensure camera is on and permissions are granted.");
         return;
       }
       
       const ctx = canvas.getContext("2d");
-      ctx.drawImage(camera, 0, 0, canvas.width, canvas.height);
+      const width = camera.videoWidth;
+      const height = camera.videoHeight;
+      canvas.width = width;
+      canvas.height = height;
+
+      ctx.drawImage(camera, 0, 0, width, height);
 
       canvas.toBlob(async (blob) => {
         const file = new File([blob], `camera-${Date.now()}.png`, { type: "image/png" });
@@ -365,13 +507,12 @@
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true });
         alert("✅ Camera access granted!");
-        stream.getTracks().forEach(track => track.stop());
+        stream.getTracks().forEach(track => track.stop()); // Stop immediately after checking
       } catch (err) {
-        alert("❌ Camera access denied.");
+        alert("❌ Camera access denied. Check your browser settings.");
       }
     });
 
-    // ✅ Camera toggle
     toggleCameraBtn.addEventListener("click", () => {
       if (cameraStream) {
         stopCamera();
@@ -387,10 +528,17 @@
 
     async function loadStorageUsage() {
       const { data: { session } } = await sb.auth.getSession();
-      if (!session) return;
+      if (!session) {
+        storageInfo.textContent = "N/A (Not logged in)";
+        return;
+      }
 
-      const { data, error } = await sb.storage.from("user-uploads").list(session.user.id, { limit: 100 });
-      if (error) return console.error(error);
+      const { data, error } = await sb.storage.from("user-uploads").list(session.user.id, { limit: 1000 }); // Increased limit for more accurate usage
+      if (error) {
+        console.error("Error loading storage usage:", error);
+        storageInfo.textContent = "Error loading.";
+        return;
+      }
 
       let totalBytes = 0;
       for (const file of data) {
@@ -402,12 +550,17 @@
       storageInfo.textContent = `${usedMB} MB / ${totalMB} MB used`;
     }
 
+    // ✅ Initial load and user display
     (async () => {
       const { data: { session } } = await sb.auth.getSession();
-      if (!session) window.location.href = "login.html";
-      else {
+      if (!session) {
+        window.location.href = "login.html";
+      } else {
+        userEmailDisplay.textContent = `Welcome, ${session.user.email}!`;
         loadFiles();
         loadStorageUsage();
+        // Automatically open Photos tab on load
+        // No need to call openTab directly, as PhotosTab is set active by default in HTML
       }
     })();
   </script>
