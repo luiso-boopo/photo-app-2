@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Settings</title>
+
+  <!-- ✅ Supabase SDK -->
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 500px;
+      margin: 40px auto;
+      text-align: center;
+    }
+
+    h1 {
+      margin-bottom: 20px;
+    }
+
+    .info {
+      margin: 10px 0;
+      font-size: 14px;
+      color: #333;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0;
+      box-sizing: border-box;
+    }
+
+    button {
+      padding: 10px 15px;
+      margin: 8px 5px;
+      cursor: pointer;
+    }
+
+    .danger {
+      background: red;
+      color: white;
+      border: none;
+    }
+  </style>
+</head>
+<body>
+  <h1>Account Settings</h1>
+
+  <p class="info">Logged in as: <span id="userEmail">Loading...</span></p>
+
+  <h2>Change Password</h2>
+  <input type="password" id="newPassword" placeholder="New password" />
+  <button id="changePasswordBtn">Change Password</button>
+
+  <h2>Account</h2>
+  <button id="deleteAccountBtn" class="danger">Delete Account</button>
+
+  <h2>Navigation</h2>
+  <button onclick="window.location.href='dashboard.html'">⬅ Back to Dashboard</button>
+  <button id="logoutBtn">Logout</button>
+
+  <script>
+    const SUPABASE_URL = "https://ywivqcxjtvmztktwlepj.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3aXZxY3hqdHZtenRrdHdsZXBqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE0NzA3NDksImV4cCI6MjA2NzA0Njc0OX0.4KUAOSRj4lnG_HCa-YNGeSReKT99qsEOgfrU9nmvh5s";
+
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
+    });
+
+    const userEmailEl = document.getElementById("userEmail");
+    const newPasswordEl = document.getElementById("newPassword");
+    const changePasswordBtn = document.getElementById("changePasswordBtn");
+    const deleteAccountBtn = document.getElementById("deleteAccountBtn");
+    const logoutBtn = document.getElementById("logoutBtn");
+
+    // ✅ Load current user
+    (async () => {
+      const { data: { session } } = await sb.auth.getSession();
+      if (!session) {
+        window.location.href = "login.html";
+        return;
+      }
+      userEmailEl.textContent = session.user.email;
+    })();
+
+    // ✅ Change password
+    changePasswordBtn.addEventListener("click", async () => {
+      const newPassword = newPasswordEl.value.trim();
+      if (!newPassword) return alert("Enter a new password");
+
+      const { error } = await sb.auth.updateUser({ password: newPassword });
+      if (error) {
+        alert("Error: " + error.message);
+      } else {
+        alert("Password updated successfully!");
+        newPasswordEl.value = "";
+      }
+    });
+
+    // ✅ Delete account (⚠️ requires backend, placeholder)
+    deleteAccountBtn.addEventListener("click", () => {
+      alert("⚠️ Account deletion requires an admin API key. Add a backend function to enable this.");
+    });
+
+    // ✅ Logout
+    logoutBtn.addEventListener("click", async () => {
+      await sb.auth.signOut();
+      window.location.href = "login.html";
+    });
+  </script>
+</body>
+</html>
