@@ -116,6 +116,14 @@
         console.error(err);
       }
     });
+
+    // ✅ Added Auth State Change Listener (new)
+    sb.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_IN" && session) {
+        console.log("✅ User signed in:", session.user.email);
+        window.location.href = "dashboard.html";
+      }
+    });
   </script>
 </body>
 </html>
