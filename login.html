@@ -100,13 +100,14 @@
       setStatus("Signup successful! Check your email to confirm.", "success");
     }));
 
-    // ✅ Google Sign-In (added)
+    // ✅ Google Sign-In (added + updated redirect)
     googleSignInBtn.addEventListener("click", async () => {
       try {
         const { data, error } = await sb.auth.signInWithOAuth({
           provider: "google",
           options: {
-            redirectTo: window.location.origin + "/dashboard.html",
+            // ✅ updated redirect for local testing
+            redirectTo: "http://localhost:8000/dashboard.html",
           },
         });
         if (error) throw error;
