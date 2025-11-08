@@ -1,96 +1,44 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Dashboard</title>
-    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-    <style>
-        /* your styles stay exactly the same */
-        /* ... */
-    </style>
-</head>
-<body>
-    <div class="header-bar">
-        <div class="left-group">
-            <h1 style="margin:0; font-size: 1.5em;">Dashboard</h1>
-            <span id="userEmailDisplay" class="welcome-message">Welcome! Loading User...</span>
-        </div>
-        <div class="right-group">
-            <button id="openSettingsBtn" class="settings-button-top">Settings</button>
-            <button id="logout">Logout</button>
-        </div>
-    </div>
+<!-- ✅ ADDED AUTH CHECK SCRIPT WITH DEBUG LOGS -->
+<script>
+  const SUPABASE_URL = "https://ywivqcxjtvmztktwlepj.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3aXZxY3hqdHZtenRrdHdsZXBqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE0NzA3NDksImV4cCI6MjA2NzA0Njc0OX0.4KUAOSRj4lnG_HCa-YNGeSReKT99qsEOgfrU9nmvh5s";
 
-    <!-- ✅ ADDED WELCOME + LOGOUT BUTTON -->
-    <div style="text-align:center; margin-top:10px;">
-      <p>Welcome, <span id="user-email">loading...</span></p>
-      <button onclick="logout()">Logout</button>
-    </div>
-    <!-- ✅ END ADDITION -->
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true,
+    },
+  });
 
-    <div id="settingsPanel">
-        <!-- ... existing content ... -->
-    </div>
+  // ✅ Check if user is logged in
+  async function checkSession() {
+    console.log("🔍 Checking Supabase session...");
+    const { data: { session }, error } = await sb.auth.getSession();
+    console.log("📦 Session data:", session);
+    console.log("⚠️ Error (if any):", error);
 
-    <div class="tab-nav">
-        <!-- ... existing content ... -->
-    </div>
-
-    <div id="PhotosTab" class="main-content-area active">
-        <!-- ... existing content ... -->
-    </div>
-
-    <div id="LiveCamTab" class="main-content-area">
-        <!-- ... existing content ... -->
-    </div>
-
-    <div id="VideosTab" class="main-content-area">
-        <!-- ... existing content ... -->
-    </div>
-
-    <!-- ✅ ADDED AUTH CHECK SCRIPT -->
-    <script>
-      const SUPABASE_URL = "https://ywivqcxjtvmztktwlepj.supabase.co";
-      const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3aXZxY3hqdHZtenRrdHdsZXBqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE0NzA3NDksImV4cCI6MjA2NzA0Njc0OX0.4KUAOSRj4lnG_HCa-YNGeSReKT99qsEOgfrU9nmvh5s";
-
-      const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-        auth: {
-          persistSession: true,
-          autoRefreshToken: true,
-          detectSessionInUrl: true,
-        },
-      });
-
-      // ✅ Check if user is logged in
-      async function checkSession() {
-        const { data: { session } } = await sb.auth.getSession();
-
-        if (!session) {
-          console.log("❌ No session found. Redirecting to login...");
-          window.location.href = "login.html";
-        } else {
-          console.log("✅ Logged in as:", session.user.email);
-          document.getElementById("user-email").textContent = session.user.email;
-        }
-      }
-
-      // ✅ Logout function
-      async function logout() {
-        await sb.auth.signOut();
+    if (!session) {
+      console.log("❌ No session found. Redirecting to login...");
+      // Wait a moment to let you see the console logs
+      setTimeout(() => {
         window.location.href = "login.html";
-      }
+      }, 2000);
+    } else {
+      console.log("✅ Logged in as:", session.user.email);
+      document.getElementById("user-email").textContent = session.user.email;
+    }
+  }
 
-      // Run check on load
-      checkSession();
-    </script>
-    <!-- ✅ END ADDITION -->
+  // ✅ Logout function
+  async function logout() {
+    console.log("👋 Logging out...");
+    await sb.auth.signOut();
+    console.log("✅ Logged out. Redirecting to login...");
+    window.location.href = "login.html";
+  }
 
-    <!-- your original script remains untouched -->
-    <script>
-      document.addEventListener("DOMContentLoaded", () => {
-        /* all your existing dashboard logic stays exactly as you had it */
-      });
-    </script>
-</body>
-</html>
+  // Run check on load
+  checkSession();
+</script>
+<!-- ✅ END ADDITION -->
