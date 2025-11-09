@@ -86,51 +86,6 @@
     </script>
     <!-- ✅ END ADDITION -->
 
-    <!-- ✅ ADDED AUTH CHECK SCRIPT WITH DEBUG LOGS -->
-    <script>
-      const SUPABASE_URL_DEBUG = "https://ywivqcxjtvmztktwlepj.supabase.co";
-      const SUPABASE_ANON_KEY_DEBUG = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3aXZxY3hqdHZtenRrdHdsZXBqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE0NzA3NDksImV4cCI6MjA2NzA0Njc0OX0.4KUAOSRj4lnG_HCa-YNGeSReKT99qsEOgfrU9nmvh5s";
-
-      const sbDebug = supabase.createClient(SUPABASE_URL_DEBUG, SUPABASE_ANON_KEY_DEBUG, {
-        auth: {
-          persistSession: true,
-          autoRefreshToken: true,
-          detectSessionInUrl: true,
-        },
-      });
-
-      // ✅ Check if user is logged in
-      async function checkSessionDebug() {
-        console.log("🔍 Checking Supabase session...");
-        const { data: { session }, error } = await sbDebug.auth.getSession();
-        console.log("📦 Session data:", session);
-        console.log("⚠️ Error (if any):", error);
-
-        if (!session) {
-          console.log("❌ No session found. Redirecting to login...");
-          // Wait a moment to let you see the console logs
-          setTimeout(() => {
-            window.location.href = "login.html";
-          }, 2000);
-        } else {
-          console.log("✅ Logged in as:", session.user.email);
-          document.getElementById("user-email").textContent = session.user.email;
-        }
-      }
-
-      // ✅ Logout function
-      async function logoutDebug() {
-        console.log("👋 Logging out...");
-        await sbDebug.auth.signOut();
-        console.log("✅ Logged out. Redirecting to login...");
-        window.location.href = "login.html";
-      }
-
-      // Run debug check on load
-      checkSessionDebug();
-    </script>
-    <!-- ✅ END ADDITION -->
-
     <!-- your original script remains untouched -->
     <script>
       document.addEventListener("DOMContentLoaded", () => {
