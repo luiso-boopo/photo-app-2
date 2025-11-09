@@ -1,44 +1,116 @@
-<!-- ✅ ADDED AUTH CHECK SCRIPT WITH DEBUG LOGS -->
-<script>
-  const SUPABASE_URL = "https://ywivqcxjtvmztktwlepj.supabase.co";
-  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3aXZxY3hqdHZtenRrdHdsZXBqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE0NzA3NDksImV4cCI6MjA2NzA0Njc0OX0.4KUAOSRj4lnG_HCa-YNGeSReKT99qsEOgfrU9nmvh5s";
-
-  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    auth: {
-      persistSession: true,
-      autoRefreshToken: true,
-      detectSessionInUrl: true,
-    },
-  });
-
-  // ✅ Check if user is logged in
-  async function checkSession() {
-    console.log("🔍 Checking Supabase session...");
-    const { data: { session }, error } = await sb.auth.getSession();
-    console.log("📦 Session data:", session);
-    console.log("⚠️ Error (if any):", error);
-
-    if (!session) {
-      console.log("❌ No session found. Redirecting to login...");
-      // Wait a moment to let you see the console logs
-      setTimeout(() => {
-        window.location.href = "login.html";
-      }, 2000);
-    } else {
-      console.log("✅ Logged in as:", session.user.email);
-      document.getElementById("user-email").textContent = session.user.email;
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dashboard</title>
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <style>
+    /* Basic dashboard styling */
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background-color: #f9f9f9;
     }
-  }
 
-  // ✅ Logout function
-  async function logout() {
-    console.log("👋 Logging out...");
-    await sb.auth.signOut();
-    console.log("✅ Logged out. Redirecting to login...");
-    window.location.href = "login.html";
-  }
+    .header-bar {
+      background-color: #222;
+      color: #fff;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 20px;
+    }
 
-  // Run check on load
-  checkSession();
-</script>
-<!-- ✅ END ADDITION -->
+    .header-bar button {
+      margin-left: 10px;
+    }
+
+    .main-content-area {
+      display: none;
+      padding: 20px;
+    }
+
+    .main-content-area.active {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div class="header-bar">
+    <div class="left-group">
+      <h1 style="margin:0; font-size: 1.5em;">Dashboard</h1>
+      <span id="userEmailDisplay" class="welcome-message">Welcome! Loading User...</span>
+    </div>
+    <div class="right-group">
+      <button id="openSettingsBtn" class="settings-button-top">Settings</button>
+      <button id="logout">Logout</button>
+    </div>
+  </div>
+
+  <div style="text-align:center; margin-top:10px;">
+    <p>Welcome, <span id="user-email">loading...</span></p>
+    <button onclick="logout()">Logout</button>
+  </div>
+
+  <div id="PhotosTab" class="main-content-area active">
+    <h2>Photos</h2>
+    <p>Your photo content will go here.</p>
+  </div>
+
+  <div id="LiveCamTab" class="main-content-area">
+    <h2>Live Cam</h2>
+    <p>Live camera content here.</p>
+  </div>
+
+  <div id="VideosTab" class="main-content-area">
+    <h2>Videos</h2>
+    <p>Your videos will go here.</p>
+  </div>
+
+  <!-- ✅ AUTH + DEBUG LOG SCRIPT -->
+  <script>
+    const SUPABASE_URL = "https://ywivqcxjtvmztktwlepj.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3aXZxY3hqdHZtenRrdHdsZXBqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE0NzA3NDksImV4cCI6MjA2NzA0Njc0OX0.4KUAOSRj4lnG_HCa-YNGeSReKT99qsEOgfrU9nmvh5s";
+
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+      },
+    });
+
+    // ✅ Check if user is logged in
+    async function checkSession() {
+      console.log("🔍 Checking Supabase session...");
+      const { data: { session }, error } = await sb.auth.getSession();
+      console.log("📦 Session data:", session);
+      console.log("⚠️ Error (if any):", error);
+
+      if (!session) {
+        console.log("❌ No session found. Redirecting to login...");
+        setTimeout(() => {
+          window.location.href = "login.html";
+        }, 2000);
+      } else {
+        console.log("✅ Logged in as:", session.user.email);
+        document.getElementById("user-email").textContent = session.user.email;
+        document.getElementById("userEmailDisplay").textContent =
+          `Welcome, ${session.user.email}!`;
+      }
+    }
+
+    // ✅ Logout function
+    async function logout() {
+      console.log("👋 Logging out...");
+      await sb.auth.signOut();
+      console.log("✅ Logged out. Redirecting to login...");
+      window.location.href = "login.html";
+    }
+
+    // Run on load
+    checkSession();
+  </script>
+</body>
+</html>
