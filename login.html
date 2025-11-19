@@ -14,7 +14,6 @@
     .error { color: red; }
     .success { color: green; }
 
-    /* ✅ Google button style */
     #googleSignIn {
       background-color: #db4437;
       color: white;
@@ -33,17 +32,14 @@
   <button id="login">Login</button>
   <button id="signup">Sign Up</button>
 
-  <!-- Google Sign-In button -->
   <button id="googleSignIn">Sign in with Google</button>
 
   <p id="status" class="msg"></p>
 
   <script>
-    // Supabase details
     const SUPABASE_URL = "https://ywivqcxjtvmztktwlepj.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3aXZxY3hqdHZtenRrdHdsZXBqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE0NzA3NDksImV4cCI6MjA2NzA0Njc0OX0.4KUAOSRj4lnG_HCa-YNGeSReKT99qsEOgfrU9nmvh5s";
 
-    // Create Supabase client
     const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
       auth: {
         persistSession: true,
@@ -69,13 +65,11 @@
       btn.disabled = false;
     }
 
-    // Auto-redirect if already logged in
     (async () => {
       const { data: { session } } = await sb.auth.getSession();
       if (session) window.location.replace("dashboard.html");
     })();
 
-    // Login button
     loginBtn.addEventListener("click", () => safeAction(loginBtn, async () => {
       const email = document.getElementById("email").value.trim();
       const password = document.getElementById("password").value.trim();
@@ -88,7 +82,6 @@
       window.location.replace("dashboard.html");
     }));
 
-    // Signup button
     signupBtn.addEventListener("click", () => safeAction(signupBtn, async () => {
       const email = document.getElementById("email").value.trim();
       const password = document.getElementById("password").value.trim();
@@ -100,13 +93,12 @@
       setStatus("Signup successful! Check your email to confirm.", "success");
     }));
 
-    // Google Sign-In
     googleSignInBtn.addEventListener("click", async () => {
       try {
         const { data, error } = await sb.auth.signInWithOAuth({
           provider: "google",
           options: {
-            redirectTo: "https://luiso-boopo.github.io/photo-app-2/dashboard.html",
+            redirectTo: "https://luiso-boopo.github.io/dashboard.html"   // ✅ FIXED
           },
         });
         if (error) throw error;
@@ -117,15 +109,12 @@
       }
     });
 
-    // Supabase event-based auto-redirect
     sb.auth.onAuthStateChange((event, session) => {
       if (event === "SIGNED_IN" && session) {
-        console.log("✅ User signed in:", session.user.email);
         window.location.href = "dashboard.html";
       }
     });
 
-    // ⭐ Your additional block (added safely)
     supabase.auth.onAuthStateChange(async (event, session) => {
       if (session) {
         window.location.href = "dashboard.html";
