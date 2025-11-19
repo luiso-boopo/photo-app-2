@@ -8,114 +8,80 @@
   <style>
     body { font-family: Arial, sans-serif; max-width: 400px; margin: 40px auto; }
     h1 { text-align: center; }
-    input { width: 100%; padding: 10px; margin: 8px 0; }
-    button { width: 100%; padding: 10px; margin: 8px 0; cursor: pointer; }
-    .msg { text-align: center; }
-    .error { color: red; }
-    .success { color: green; }
-
-    /* ✅ Google button style (added) */
-    #googleSignIn {
-      background-color: #db4437;
-      color: white;
-      border: none;
-      font-weight: bold;
-    }
-    #googleSignIn:hover {
-      background-color: #c23321;
-    }
+    input { width: 100%; padding: 10px; margin: 5px 0; }
+    button { width: 100%; padding: 10px; margin: 5px 0; cursor: pointer; }
+    #googleBtn { background: #4285F4; color: white; }
   </style>
 </head>
 <body>
+
   <h1>Login</h1>
-  <input type="email" id="email" placeholder="Email" autocomplete="email" />
-  <input type="password" id="password" placeholder="Password" autocomplete="current-password" />
-  <button id="login">Login</button>
-  <button id="signup">Sign Up</button>
 
-  <!-- ✅ Added Google Sign-In button -->
-  <button id="googleSignIn">Sign in with Google</button>
+  <h3>Email Login</h3>
+  <input id="email" type="email" placeholder="Email">
+  <input id="password" type="password" placeholder="Password">
+  <button id="loginBtn">Login</button>
+  <button id="signupBtn">Sign Up</button>
 
-  <p id="status" class="msg"></p>
+  <h3>Or</h3>
+  <button id="googleBtn">Continue with Google</button>
 
   <script>
-    // ✅ Your Supabase project details
     const SUPABASE_URL = "https://ywivqcxjtvmztktwlepj.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3aXZxY3hqdHZtenRrdHdsZXBqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE0NzA3NDksImV4cCI6MjA2NzA0Njc0OX0.4KUAOSRj4lnG_HCa-YNGeSReKT99qsEOgfrU9nmvh5s";
 
-    // ✅ Create client with robust auth settings
     const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      auth: {
-        persistSession: true,
-        autoRefreshToken: true,
-        detectSessionInUrl: true,
-      },
+      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
     });
 
-    const statusEl = document.getElementById("status");
-    const loginBtn = document.getElementById("login");
-    const signupBtn = document.getElementById("signup");
-    const googleSignInBtn = document.getElementById("googleSignIn"); // ✅ added
-
-    function setStatus(text, type = "") {
-      statusEl.className = `msg ${type}`;
-      statusEl.textContent = text;
-    }
-
-    async function safeAction(btn, fn) {
-      btn.disabled = true;
-      setStatus("");
-      try { await fn(); } catch (e) { setStatus(e.message || "Unexpected error", "error"); }
-      btn.disabled = false;
-    }
-
-    // ✅ Redirect if already logged in
-    (async () => {
-      const { data: { session } } = await sb.auth.getSession();
-      if (session) window.location.replace("dashboard.html");
-    })();
-
-    // ✅ Login
-    loginBtn.addEventListener("click", () => safeAction(loginBtn, async () => {
-      const email = document.getElementById("email").value.trim();
-      const password = document.getElementById("password").value.trim();
-      if (!email || !password) return setStatus("Enter email and password", "error");
-
-      const { error } = await sb.auth.signInWithPassword({ email, password });
-      if (error) return setStatus(error.message, "error");
-
-      setStatus("Login successful. Redirecting…", "success");
-      window.location.replace("dashboard.html");
-    }));
-
-    // ✅ Sign up
-    signupBtn.addEventListener("click", () => safeAction(signupBtn, async () => {
-      const email = document.getElementById("email").value.trim();
-      const password = document.getElementById("password").value.trim();
-      if (!email || !password) return setStatus("Enter email and password", "error");
-
-      const { error } = await sb.auth.signUp({ email, password });
-      if (error) return setStatus(error.message, "error");
-
-      setStatus("Signup successful! Check your email to confirm.", "success");
-    }));
-
-    // ✅ Google Sign-In (added)
-    googleSignInBtn.addEventListener("click", async () => {
-      try {
-        const { data, error } = await sb.auth.signInWithOAuth({
-          provider: "google",
-          options: {
-            redirectTo: window.location.origin + "/dashboard.html",
-          },
-        });
-        if (error) throw error;
-        console.log("Redirecting to Google...");
-      } catch (err) {
-        setStatus("Google Sign-In failed: " + err.message, "error");
-        console.error(err);
+    // ⭐ Fix redirect loop
+    sb.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_IN") {
+        window.location.href = "dashboard.html";
       }
     });
+
+    // -------------------------
+    // Email login / signup
+    // -------------------------
+
+    document.getElementById("loginBtn").addEventListener("click", async () => {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+
+      const { error } = await sb.auth.signInWithPassword({ email, password });
+
+      if (error) alert(error.message);
+      else window.location.href = "dashboard.html";
+    });
+
+    document.getElementById("signupBtn").addEventListener("click", async () => {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+
+      const { error } = await sb.auth.signUp({ email, password });
+
+      if (error) alert(error.message);
+      else alert("Signup successful! Check your email to confirm.");
+    });
+
+    // -------------------------
+    // Google OAuth login
+    // -------------------------
+
+    document.getElementById("googleBtn").addEventListener("click", async () => {
+      await sb.auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo: window.location.origin + "/dashboard.html" }
+      });
+    });
+
+    // Auto-redirect if already logged in
+    (async () => {
+      const { data: { session } } = await sb.auth.getSession();
+      if (session) window.location.href = "dashboard.html";
+    })();
+
   </script>
 </body>
 </html>
