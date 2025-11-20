@@ -42,7 +42,8 @@
   <script>
     // Supabase details
     const SUPABASE_URL = "https://ywivqcxjtvmztktwlepj.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3aXZxY3hqdHZtenRrdHdsZXBqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE0NzA3NDksImV4cCI6MjA2NzA0Njc0OX0.4KUAOSRj4lnG_HCa-YNGeSReKT99qsEOgfrU9nmvh5s";
+    const SUPABASE_ANON_KEY =
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3aXZxY3hqdHZtenRrdHdsZXBqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE0NzA3NDksImV4cCI6MjA2NzA0Njc0OX0.4KUAOSRj4lnG_HCa-YNGeSReKT99qsEOgfrU9nmvh5s";
 
     // GitHub Pages correct redirect
     const DASHBOARD_URL = "https://luiso-boopo.github.io/photo-app-2/dashboard.html";
@@ -77,12 +78,16 @@
       btn.disabled = false;
     }
 
+    // --- SAFETY FIX: Cleanup OAuth fragments from URL ---
+    if (window.location.hash.includes("access_token")) {
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+
     // Auto-redirect if already logged in
     (async () => {
       const { data: { session } } = await sb.auth.getSession();
       if (session) window.location.replace(DASHBOARD_URL);
     })();
-
 
     // Login button
     loginBtn.addEventListener("click", () => safeAction(loginBtn, async () => {
@@ -98,7 +103,6 @@
       window.location.replace(DASHBOARD_URL);
     }));
 
-
     // Signup button
     signupBtn.addEventListener("click", () => safeAction(signupBtn, async () => {
       const email = document.getElementById("email").value.trim();
@@ -112,14 +116,14 @@
       setStatus("Signup successful! Check your email to confirm.", "success");
     }));
 
-
     // Google Sign-In
     googleSignInBtn.addEventListener("click", async () => {
       try {
         const { error } = await sb.auth.signInWithOAuth({
           provider: "google",
           options: {
-            redirectTo: DASHBOARD_URL,
+            redirectTo: DASHBOARD_URL, // MUST stay absolute
+            skipBrowserRedirect: false
           },
         });
         if (error) throw error;
@@ -127,7 +131,6 @@
         setStatus("Google Sign-In failed: " + err.message, "error");
       }
     });
-
 
     // Single correct redirect handler
     sb.auth.onAuthStateChange((event, session) => {
