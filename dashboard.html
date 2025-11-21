@@ -524,10 +524,10 @@
             toggleCameraBtn.addEventListener("click", () => {
                 if (cameraStream) {
                     stopCamera();
-                    toggleCameraBtn.textContent = "Turn Camera On";
+                    toggleCameraBtn.textContent = "Turn Camera Off";
                 } else {
                     startCamera();
-                    toggleCameraBtn.textContent = "Turn Camera Off";
+                    toggleCameraBtn.textContent = "Turn Camera On";
                 }
             });
 
@@ -556,7 +556,7 @@
                 storageInfo.textContent = `${usedMB} MB / ${totalMB} MB used`;
             }
 
-            // ------------------- INITIALIZATION -------------------
+            // ------------------- INITIALIZATION (Includes the security check) -------------------
             (async () => {
                 const { data: { session } } = await sb.auth.getSession();
                 if (!session) {
