@@ -1,136 +1,145 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Login</title>
-  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-  <style>
-    body { font-family: Arial, sans-serif; max-width: 400px; margin: 40px auto; }
-    h1 { text-align: center; }
-    input { width: 100%; padding: 10px; margin: 8px 0; }
-    button { width: 100%; padding: 10px; margin: 8px 0; cursor: pointer; }
-    .msg { text-align: center; }
-    .error { color: red; }
-    .success { color: green; }
-
-    /* ✅ Google button style */
-    #googleSignIn {
-      background-color: #db4437;
-      color: white;
-      border: none;
-      font-weight: bold;
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Login</title>
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 400px; margin: 40px auto; padding: 0 20px; box-sizing: border-box; }
+    h1 { text-align: center; color: #333; }
+    input { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+    button { 
+        width: 100%; padding: 12px; margin: 10px 0; cursor: pointer; border: none; border-radius: 6px; 
+        background-color: #007bff; color: white; font-weight: bold; transition: background-color 0.2s;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
-    #googleSignIn:hover {
-      background-color: #c23321;
-    }
-  </style>
+    button:hover { background-color: #0056b3; }
+    .msg { text-align: center; padding: 10px; border-radius: 4px; margin-top: 15px; font-weight: 500;}
+    .error { color: #842029; background-color: #f8d7da; border: 1px solid #f5c2c7; }
+    .success { color: #0f5132; background-color: #d1e7dd; border: 1px solid #badbcc; }
+    #googleSignIn { background-color: #db4437; color: white; }
+    #googleSignIn:hover { background-color: #c23321; }
+  </style>
 </head>
 <body>
-  <h1>Login</h1>
-  <input type="email" id="email" placeholder="Email" autocomplete="email" />
-  <input type="password" id="password" placeholder="Password" autocomplete="current-password" />
-  <button id="login">Login</button>
-  <button id="signup">Sign Up</button>
+  <h1>Photo App Login</h1>
+  <input type="email" id="email" placeholder="Email" autocomplete="email" />
+  <input type="password" id="password" placeholder="Password" autocomplete="current-password" />
+  <button id="login">Login</button>
+  <button id="signup">Sign Up</button>
 
-  <!-- Google Sign-In button -->
-  <button id="googleSignIn">Sign in with Google</button>
+  <p style="text-align:center; margin: 20px 0; color: #555;">— OR —</p>
 
-  <p id="status" class="msg"></p>
+  <button id="googleSignIn">Sign in with Google</button>
 
-  <script>
-    // Supabase details
+  <p id="status" class="msg"></p>
+
+  <script>
+    // --- CONFIGURATION ---
     const SUPABASE_URL = "https://ywivqcxjtvmztktwlepj.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3aXZxY3hqdHZtenRrdHdsZXBqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE0NzA3NDksImV4cCI6MjA2NzA0Njc0OX0.4KUAOSRj4lnG_HCa-YNGeSReKT99qsEOgfrU9nmvh5s";
+    
+    // The ABSOLUTE URL where your dashboard is hosted (CRITICAL FOR OAUTH)
+    const DASHBOARD_URL = "https://luiso-boopo.github.io/photo-app-2/dashboard.html";
 
-    // Create Supabase client
     const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      auth: {
-        persistSession: true,
-        autoRefreshToken: true,
-        detectSessionInUrl: true,
-      },
-    });
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+      },
+    });
 
+    // --- DOM ELEMENTS AND UTILITIES ---
     const statusEl = document.getElementById("status");
     const loginBtn = document.getElementById("login");
     const signupBtn = document.getElementById("signup");
     const googleSignInBtn = document.getElementById("googleSignIn");
 
     function setStatus(text, type = "") {
-      statusEl.className = `msg ${type}`;
-      statusEl.textContent = text;
+        statusEl.className = `msg ${type}`;
+        statusEl.textContent = text;
     }
 
     async function safeAction(btn, fn) {
-      btn.disabled = true;
-      setStatus("");
-      try { await fn(); } catch (e) { setStatus(e.message || "Unexpected error", "error"); }
-      btn.disabled = false;
+        btn.disabled = true;
+        setStatus("");
+        try { await fn(); } 
+        catch (e) { setStatus(e.message || "Unexpected error", "error"); console.error(e); }
+        btn.disabled = false;
     }
 
-    // Auto-redirect if already logged in
-    (async () => {
-      const { data: { session } } = await sb.auth.getSession();
-      if (session) window.location.replace("dashboard.html");
-    })();
+    // --- CRITICAL AUTO-REDIRECT (Stops the loop from this side) ---
+    // Checks for an existing session and redirects immediately.
+    sb.auth.getSession().then(({ data: { session } }) => {
+        if (session) {
+            console.log("Session found on login page. Redirecting to dashboard.");
+            // Use replace() to prevent hitting 'back' to the login page
+            window.location.replace(DASHBOARD_URL); 
+        }
+        // Also clear any lingering tokens just in case
+        if (window.location.hash.includes("access_token")) {
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+    });
 
-    // Login button
+    // --- EVENT LISTENERS ---
+
+    // 1. Email/Password Login
     loginBtn.addEventListener("click", () => safeAction(loginBtn, async () => {
-      const email = document.getElementById("email").value.trim();
-      const password = document.getElementById("password").value.trim();
-      if (!email || !password) return setStatus("Enter email and password", "error");
+        const email = document.getElementById("email").value.trim();
+        const password = document.getElementById("password").value.trim();
+        if (!email || !password) return setStatus("Enter email and password", "error");
 
-      const { error } = await sb.auth.signInWithPassword({ email, password });
-      if (error) return setStatus(error.message, "error");
+        const { error } = await sb.auth.signInWithPassword({ email, password });
+        if (error) return setStatus(error.message, "error");
 
-      setStatus("Login successful. Redirecting…", "success");
-      window.location.replace("dashboard.html");
+        setStatus("Login successful. Redirecting…", "success");
+        window.location.replace(DASHBOARD_URL); 
     }));
 
-    // Signup button
+    // 2. Email/Password Sign Up
     signupBtn.addEventListener("click", () => safeAction(signupBtn, async () => {
-      const email = document.getElementById("email").value.trim();
-      const password = document.getElementById("password").value.trim();
-      if (!email || !password) return setStatus("Enter email and password", "error");
+        const email = document.getElementById("email").value.trim();
+        const password = document.getElementById("password").value.trim();
+        if (!email || !password) return setStatus("Enter email and password", "error");
 
-      const { error } = await sb.auth.signUp({ email, password });
-      if (error) return setStatus(error.message, "error");
+        const { error } = await sb.auth.signUp({ 
+            email, 
+            password, 
+            options: { emailRedirectTo: window.location.href.split('#')[0] } // Sends confirmation link back to this page
+        });
+        if (error) return setStatus(error.message, "error");
 
-      setStatus("Signup successful! Check your email to confirm.", "success");
+        setStatus("Signup successful! Check your email to confirm.", "success");
     }));
 
-    // Google Sign-In
+    // 3. Google Sign-In (CRITICAL: Uses redirectTo option)
     googleSignInBtn.addEventListener("click", async () => {
-      try {
-        const { data, error } = await sb.auth.signInWithOAuth({
-          provider: "google",
-          options: {
-            redirectTo: "https://luiso-boopo.github.io/photo-app-2/dashboard.html",
-          },
-        });
-        if (error) throw error;
-        console.log("Redirecting to Google...");
-      } catch (err) {
-        setStatus("Google Sign-In failed: " + err.message, "error");
-        console.error(err);
-      }
+        try {
+            const { error } = await sb.auth.signInWithOAuth({
+                provider: "google",
+                options: {
+                    // 🔑 Tells Google/Supabase to send the user to this absolute URL
+                    redirectTo: DASHBOARD_URL, 
+                    skipBrowserRedirect: false
+                }
+            });
+            if (error) throw error;
+        } catch (err) {
+            setStatus("Google Sign-In failed: " + err.message, "error");
+        }
     });
-
-    // Supabase event-based auto-redirect
+    
+    // 4. Fallback Auth State Listener for successful sign-ins (e.g., from email confirmation)
     sb.auth.onAuthStateChange((event, session) => {
-      if (event === "SIGNED_IN" && session) {
-        console.log("✅ User signed in:", session.user.email);
-        window.location.href = "dashboard.html";
-      }
+        if (event === "SIGNED_IN" && session) {
+            console.log("✅ Auth State Change: SIGNED_IN detected.");
+            window.location.replace(DASHBOARD_URL);
+        }
     });
 
-    // ⭐ Your additional block (added safely)
-    supabase.auth.onAuthStateChange(async (event, session) => {
-      if (session) {
-        window.location.href = "dashboard.html";
-      }
-    });
-  </script>
+  </script>
 </body>
 </html>
