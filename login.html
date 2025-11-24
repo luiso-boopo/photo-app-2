@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Login</title>
+  
   <style>
     body { font-family: Arial, sans-serif; max-width: 400px; margin: 40px auto; padding: 0 20px; box-sizing: border-box; }
     h1 { text-align: center; color: #333; }
@@ -22,7 +23,7 @@
   </style>
 </head>
 <body>
-    <!-- 🔑 MOVED: Supabase Library must be loaded before our custom script to prevent errors. -->
+    <!-- 🔑 CRITICAL FIX: Moving script here ensures it loads before we try to use it. -->
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
   <h1>Photo App Login</h1>
@@ -42,7 +43,7 @@
     const SUPABASE_URL = "https://ywivqcxjtvmztktwlepj.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3aXZxY3hqdHZtenRrdHdsZXBqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE0NzA3NDksImV4cCI6MjA2NzA0Njc0OX0.4KUAOSRj4lnG_HCa-YNGeSReKT99qsEOgfrU9nmvh5s";
     
-    // The dashboard URL used for redirecting after sign-in
+    // Using a relative path is fine since dashboard.html is in the same folder
     const DASHBOARD_URL = "dashboard.html"; 
 
     const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
@@ -73,7 +74,7 @@
     }
 
     // --- INITIAL SESSION CHECK ---
-    // Auto-redirect if already logged in (using window.location.replace is cleaner)
+    // Checks for an existing session and redirects immediately.
     sb.auth.getSession().then(({ data: { session } }) => {
         if (session) {
             console.log("Session found on login page. Redirecting to dashboard.");
@@ -115,11 +116,11 @@
     // 3. Google Sign-In (CRITICAL: Uses absolute redirectTo URL)
     googleSignInBtn.addEventListener("click", async () => {
         try {
+            // This absolute URL MUST match the one in your Supabase Auth Redirect URLs list
             const absoluteRedirectUrl = "https://luiso-boopo.github.io/photo-app-2/dashboard.html";
             const { error } = await sb.auth.signInWithOAuth({
                 provider: "google",
                 options: {
-                    // This ABSOLUTE URL must match the one in your Supabase Auth Redirect URLs list
                     redirectTo: absoluteRedirectUrl, 
                     skipBrowserRedirect: false
                 }
@@ -130,7 +131,7 @@
         }
     });
     
-    // 4. Auth State Listener for successful sign-ins (after email confirmation or just in case)
+    // 4. Auth State Listener for successful sign-ins
     sb.auth.onAuthStateChange((event, session) => {
         if (event === "SIGNED_IN" && session) {
             console.log("✅ Auth State Change: SIGNED_IN detected.");
