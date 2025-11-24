@@ -691,7 +691,16 @@
         openSettingsBtn.addEventListener("click", () => settingsPanel.style.display = "flex");
         closeSettingsBtn.addEventListener("click", () => settingsPanel.style.display = "none");
         
-    });
+        // Also close on outside click
+        settingsPanel.addEventListener("click", (e) => {
+            if (e.target === settingsPanel) {
+                settingsPanel.style.display = "none";
+            }
+        });
+
+        // Ensure the correct tab is active on load
+        document.querySelector('.tab-button.active').click();
+    }); // End of DOMContentLoaded
 </script>
 </body>
 </html>
