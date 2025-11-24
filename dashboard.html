@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Dashboard</title>
+    <title>Photo App Dashboard</title>
+    <!-- Supabase Library -->
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <style>
         /* ------------------- BASE STYLES ------------------- */
@@ -240,7 +241,7 @@
 <body>
     <div class="header-bar">
         <div class="left-group">
-            <h1 style="margin:0; font-size: 1.5em;">Dashboard</h1>
+            <h1 style="margin:0; font-size: 1.5em;">Photo App Dashboard</h1>
             <span id="userEmailDisplay" class="welcome-message">Welcome! Loading User...</span>
         </div>
         <div class="right-group">
@@ -292,9 +293,11 @@
     <script>
         // Use document.addEventListener to ensure the DOM is fully loaded before trying to access elements
         document.addEventListener("DOMContentLoaded", () => {
-            // 🛑 IMPORTANT: YOUR SUPABASE KEYS ARE HERE 🛑
+            // 🛑 SUPABASE CONFIGURATION 🛑
+            // Using the keys provided in the initial code block:
             const SUPABASE_URL = "https://ywivqcxjtvmztktwlepj.supabase.co";
-            const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3aXZxY3hqdHZmenRrdHdsZXBqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE0NzA3NDksImV4cCI6MjA2NzA0Njc0OX0.4KUAOSRj4lnG_HCa-YNGeSReKT99qsEOQeM_s";
+            const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3aXZxY3hqdHZtenRrdHdsZXBqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE0NzA3NDksImV4cCI6MjA2NzA0Njc0OX0.4KUAOSRj4lnG_HCa-YNGeSReKT99qsEOQeM_s";
+            const LOGIN_URL = "login.html";
 
             // Initialize Supabase Client
             const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
@@ -352,13 +355,14 @@
             // -------------------------------------------------------------------
 
             function sanitize(name) {
+                // Supabase recommends basic sanitization for file paths
                 return name.replace(/[^a-zA-Z0-9._-]/g, "_");
             }
 
             // ------------------- LOGOUT -------------------
             logoutBtn.addEventListener("click", async () => {
                 await sb.auth.signOut();
-                window.location.href = "login.html";
+                // The onAuthStateChange listener below will handle the redirect after sign out
             });
 
             // ------------------- FILE UPLOAD -------------------
@@ -370,8 +374,10 @@
                 if (!session) return alert("Not logged in");
 
                 const safeName = sanitize(file.name);
+                // Use user ID to create a secure, isolated folder path
                 const path = `${session.user.id}/${Date.now()}-${safeName}`;
 
+                // Upload the file to the 'user-uploads' bucket
                 const { error } = await sb.storage.from("user-uploads").upload(path, file, { upsert: false });
 
                 if (error) {
@@ -389,16 +395,18 @@
                 const { data: { session } } = await sb.auth.getSession();
                 if (!session) return;
 
+                // List files only within the user's isolated folder
                 const { data, error } = await sb.storage.from("user-uploads").list(session.user.id, { limit: 100 });
-                if (error) return console.error(error);
+                if (error) return console.error("Error listing files:", error);
 
                 photoList.innerHTML = "";
                 videoList.innerHTML = "";
 
                 for (const file of data) {
+                    // Create a signed URL for secure, temporary access
                     const { data: signed } = await sb.storage
                         .from("user-uploads")
-                        .createSignedUrl(`${session.user.id}/${file.name}`, 60 * 60);
+                        .createSignedUrl(`${session.user.id}/${file.name}`, 60 * 60); // URL valid for 1 hour (3600 seconds)
 
                     const div = document.createElement("div");
                     div.className = "file-card";
@@ -410,6 +418,7 @@
                     if (file.name.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
                         const img = document.createElement("img");
                         img.src = signed?.signedUrl || "";
+                        img.alt = file.name;
                         div.appendChild(img);
                         targetList = photoList;
                         isMedia = true;
@@ -432,10 +441,18 @@
                         const delBtn = document.createElement("button");
                         delBtn.textContent = "Delete";
                         delBtn.onclick = async () => {
-                            if (!confirm(`Are you sure you want to delete ${file.name}?`)) return;
-                            await sb.storage.from("user-uploads").remove([`${session.user.id}/${file.name}`]);
-                            loadFiles();
-                            loadStorageUsage();
+                            // Use custom modal or simple confirmation since alerts/confirms are sometimes blocked
+                            if (!window.confirm(`Are you sure you want to delete ${file.name}?`)) return; 
+                            
+                            const { error: deleteError } = await sb.storage.from("user-uploads").remove([`${session.user.id}/${file.name}`]);
+                            
+                            if (deleteError) {
+                                console.error("Deletion failed:", deleteError);
+                                alert("Deletion failed: " + deleteError.message);
+                            } else {
+                                loadFiles();
+                                loadStorageUsage();
+                            }
                         };
                         div.appendChild(delBtn);
 
@@ -456,7 +473,7 @@
                     })
                     .catch(err => {
                         console.error("Camera access failed:", err);
-                        // Optional: Alert user that camera failed to start
+                        alert("Error accessing camera. Check permissions or ensure no other app is using it.");
                     });
             }
 
@@ -524,10 +541,10 @@
             toggleCameraBtn.addEventListener("click", () => {
                 if (cameraStream) {
                     stopCamera();
-                    toggleCameraBtn.textContent = "Turn Camera On"; // Corrected text
+                    toggleCameraBtn.textContent = "Turn Camera On";
                 } else {
                     startCamera();
-                    toggleCameraBtn.textContent = "Turn Camera Off"; // Corrected text
+                    toggleCameraBtn.textContent = "Turn Camera Off";
                 }
             });
 
@@ -538,10 +555,7 @@
                     return;
                 }
 
-                // Note: Supabase Storage currently doesn't provide a direct "total storage used" endpoint.
-                // The below function calculates the total by summing up the sizes of files listed.
-                // This is an *approximation* and depends on the API returning the size accurately.
-
+                // Calculates the total usage by summing file sizes (approximation)
                 const { data, error } = await sb.storage.from("user-uploads").list(session.user.id, { limit: 1000 });
                 if (error) {
                     console.error("Error loading storage usage:", error);
@@ -551,7 +565,6 @@
 
                 let totalBytes = 0;
                 for (const file of data) {
-                    // Supabase list() returns metadata with size for uploaded files
                     totalBytes += file.metadata?.size || 0;
                 }
 
@@ -560,32 +573,29 @@
                 storageInfo.textContent = `${usedMB} MB / ${totalMB} MB used`;
             }
 
-            // ------------------- 🚀 CORRECTED INITIALIZATION LOGIC 🚀 -------------------
-            // This replaces the old (async () => { ... })(); block that caused the loop.
+            // ------------------- 🚀 CORE AUTHENTICATION INITIALIZATION 🚀 -------------------
             sb.auth.onAuthStateChange((event, session) => {
                 console.log("Auth State Event:", event, session ? "Session Exists" : "No Session");
             
-                // 1. A valid session is found (after Google login redirect or existing session)
                 if (session) {
+                    // 1. Session is valid (INITIAL_SESSION, SIGNED_IN, TOKEN_REFRESHED)
                     if (userEmailDisplay) {
                         userEmailDisplay.textContent = `Welcome, ${session.user.email}!`;
                     }
                     
-                    // Load your app content
+                    // Load user content only once the session is confirmed
                     loadFiles();
                     loadStorageUsage();
                     
                     // CRITICAL FIX: Clear the URL fragment after processing the tokens.
-                    // This stops the browser from constantly re-processing the tokens on refresh.
                     if (window.location.hash.includes("access_token")) {
                         window.history.replaceState(null, null, window.location.pathname);
                     }
                 } else {
                     // 2. No session found. Redirect to login only when necessary.
-                    // 'SIGNED_OUT' is when user explicitly logs out.
-                    // 'INITIAL_SESSION' is when page loads and no session is found.
                     if (event === 'SIGNED_OUT' || event === 'INITIAL_SESSION') {
-                        window.location.href = "login.html";
+                        // Redirect to the login page
+                        window.location.href = LOGIN_URL;
                     }
                 }
             });
