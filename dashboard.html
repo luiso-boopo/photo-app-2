@@ -3,12 +3,13 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Dashboard</title>
+    <title>Supabase Dashboard</title>
+    <!-- Supabase SDK -->
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <style>
         /* ------------------- BASE STYLES ------------------- */
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Inter', Arial, sans-serif;
             margin: 0;
             padding: 0;
             background-color: #f0f2f5;
@@ -23,12 +24,11 @@
             padding: 8px 15px;
             border: none;
             border-radius: 5px;
-            background-color: #007bff;
-            color: white;
             cursor: pointer;
-            transition: background-color 0.2s ease;
+            transition: background-color 0.2s ease, transform 0.1s;
         }
-        button:hover { background-color: #0056b3; }
+        button:hover { transform: translateY(-1px); }
+        button:active { transform: translateY(0); }
 
         /* ------------------- TOP HEADER BAR ------------------- */
         .header-bar {
@@ -50,14 +50,16 @@
             margin-left: 20px;
             color: #555;
         }
-        .settings-button-top {
+        #openSettingsBtn {
             background-color: #6c757d;
+            color: white;
         }
-        .settings-button-top:hover {
+        #openSettingsBtn:hover {
             background-color: #5a6268;
         }
         #logout {
             background-color: #dc3545;
+            color: white;
             margin-left: 10px;
         }
         #logout:hover {
@@ -80,9 +82,9 @@
         }
         #settingsPanel h2 { margin-bottom: 15px; color: #333; }
         #settingsPanel button { margin-bottom: 10px; width: 100%; }
-        #settingsPanel a button { background-color: #17a2b8; }
+        #settingsPanel a button { background-color: #17a2b8; color: white; }
         #settingsPanel a button:hover { background-color: #138496; }
-        #settingsPanel #closeSettingsBtn { background-color: #6c757d; margin-top: 15px; }
+        #settingsPanel #closeSettingsBtn { background-color: #6c757d; margin-top: 15px; color: white; }
 
         /* ------------------- TAB NAVIGATION ------------------- */
         .tab-nav {
@@ -104,11 +106,6 @@
             color: #6c757d;
             transition: all 0.3s ease;
             text-decoration: none;
-        }
-
-        .tab-button:hover:not(.active) {
-            color: #007bff;
-            background-color: #f8f9fa;
         }
 
         .tab-button.active {
@@ -142,45 +139,53 @@
 
         .file-card {
             border: 1px solid #e0e0e0;
-            border-radius: 6px;
+            border-radius: 8px;
             overflow: hidden;
             text-align: center;
             display: flex;
             flex-direction: column;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+            background-color: #fff;
+        }
+        .file-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
         }
 
         .file-card img, .file-card video {
             width: 100%;
             height: 130px;
             object-fit: cover;
-            margin-bottom: 8px;
+            display: block;
+            border-bottom: 1px solid #eee;
         }
 
         .file-card a {
-            padding: 0 8px 8px;
+            padding: 8px;
             word-break: break-all;
             display: block;
-            font-size: 0.85em;
-            color: #444;
+            font-size: 0.9em;
+            color: #007bff;
             text-decoration: none;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
+            flex-grow: 1;
         }
-        .file-card a:hover { text-decoration: underline; }
+        .file-card a:hover { text-decoration: underline; color: #0056b3; }
 
-        .file-card button {
+        .file-card .delete-btn {
             width: 100%;
             margin-top: auto;
             background-color: #dc3545;
             color: white;
-            border-radius: 0 0 6px 6px;
+            border-radius: 0 0 8px 8px;
             padding: 8px 0;
             border: none;
             font-size: 0.9em;
         }
-        .file-card button:hover { background-color: #c82333; }
+        .file-card .delete-btn:hover { background-color: #c82333; }
 
         /* ------------------- LIVE CAM STYLES ------------------- */
         .live-cam-container {
@@ -203,31 +208,67 @@
             background:#000;
             display: block;
             margin-bottom: 15px;
-            border-radius: 4px;
+            border-radius: 8px;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
         }
-        #captureBtn, #fileInput, #uploadBtn {
-            width: 100%;
-            margin-bottom: 10px;
-        }
+        #captureBtn { background-color: #007bff; color: white; }
         #fileInput {
+            width: 100%;
             padding: 10px;
             border: 1px solid #ced4da;
             border-radius: 5px;
             background-color: #fff;
             margin-top: 15px;
+            margin-bottom: 10px;
         }
-        #uploadBtn { background-color: #28a745; }
+        #uploadBtn { background-color: #28a745; color: white; }
         #uploadBtn:hover { background-color: #218838; }
 
         /* Canvas is always hidden but needs some size */
-        #canvas { display:none; width: 320px; height: 240px; }
+        #canvas { display:none; }
+
+        /* ------------------- CUSTOM MODAL STYLES ------------------- */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            text-align: center;
+        }
+
+        .modal-content p {
+            font-size: 1.1em;
+            margin-bottom: 20px;
+            color: #555;
+        }
+
+        .modal-close-btn {
+            background-color: #007bff;
+            color: white;
+            width: 100px;
+        }
 
         /* ------------------- RESPONSIVE ADJUSTMENTS ------------------- */
         @media (max-width: 768px) {
             .header-bar { flex-direction: column; align-items: flex-start; }
             .header-bar .right-group { margin-top: 10px; width: 100%; justify-content: space-between; }
-            .welcome-message { margin-left: 0; margin-top: 10px; }
-            #openSettingsBtn, #logout { position: static; margin-left: 0; width: 48%; }
+            .welcome-message { margin-left: 0; margin-top: 10px; font-size: 1em; }
+            #openSettingsBtn, #logout { margin-left: 0; width: 48%; }
             #settingsPanel { top: 70px; right: 10px; left: 10px; width: auto; }
             .main-content-area { margin: 10px; padding: 15px; }
             .tab-button { padding: 10px 15px; font-size: 1em; }
@@ -244,28 +285,31 @@
             <span id="userEmailDisplay" class="welcome-message">Welcome! Loading User...</span>
         </div>
         <div class="right-group">
-            <button id="openSettingsBtn" class="settings-button-top">Settings</button>
+            <button id="openSettingsBtn">Settings</button>
             <button id="logout">Logout</button>
         </div>
     </div>
 
+    <!-- Settings Panel -->
     <div id="settingsPanel">
         <h2>Settings</h2>
-        <button id="cameraPermissionBtn">Request Camera Access</button><br>
-        <button id="toggleCameraBtn">Turn Camera Off</button><br>
+        <button id="cameraPermissionBtn">Request Camera Access</button>
+        <button id="toggleCameraBtn">Turn Camera Off</button>
         <a href="https://supabase.com/docs/guides/auth/auth-password-reset" target="_blank">
             <button>Change Password</button>
-        </a><br>
-        <p><strong>Storage Used:</strong> <span id="storageInfo">Loading...</span></p>
+        </a>
+        <p style="margin-top: 20px;"><strong>Storage Used:</strong> <span id="storageInfo">Loading...</span></p>
         <button id="closeSettingsBtn">Close</button>
     </div>
 
+    <!-- Tab Navigation -->
     <div class="tab-nav">
         <button class="tab-button active" onclick="openTab(event, 'PhotosTab')">Photos</button>
         <button class="tab-button" onclick="openTab(event, 'LiveCamTab')">Live Cam</button>
         <button class="tab-button" onclick="openTab(event, 'VideosTab')">Videos</button>
     </div>
 
+    <!-- Tab Content -->
     <div id="PhotosTab" class="main-content-area active">
         <h2>Your Photos</h2>
         <div id="photoList" class="file-grid"></div>
@@ -275,7 +319,7 @@
         <h2>Live Camera & Upload</h2>
         <div class="live-cam-container">
             <video id="camera" autoplay playsinline></video>
-            <canvas id="canvas" style="display:none;"></canvas>
+            <canvas id="canvas"></canvas>
             <button id="captureBtn">Take Picture</button>
 
             <h3 style="margin-top: 25px; margin-bottom: 10px; color: #555;">Or Upload a File</h3>
@@ -289,8 +333,46 @@
         <div id="videoList" class="file-grid"></div>
     </div>
 
+    <!-- Custom Modal for Alerts/Confirms -->
+    <div id="customModal" class="modal-overlay">
+        <div class="modal-content">
+            <p id="modalMessage">Message content goes here.</p>
+            <button id="modalConfirmBtn" class="modal-close-btn" style="display: none;">Confirm</button>
+            <button id="modalCloseBtn" class="modal-close-btn">OK</button>
+        </div>
+    </div>
+
     <script>
-        // Use document.addEventListener to ensure the DOM is fully loaded before trying to access elements
+        // --- Custom Modal System (Replaces alert() and confirm()) ---
+        const modalOverlay = document.getElementById("customModal");
+        const modalMessage = document.getElementById("modalMessage");
+        const modalCloseBtn = document.getElementById("modalCloseBtn");
+        const modalConfirmBtn = document.getElementById("modalConfirmBtn");
+
+        function showModal(message, isConfirm = false) {
+            return new Promise(resolve => {
+                modalMessage.textContent = message;
+                modalOverlay.style.display = "flex";
+                modalCloseBtn.style.display = isConfirm ? 'inline-block' : 'inline-block';
+                modalConfirmBtn.style.display = isConfirm ? 'inline-block' : 'none';
+
+                modalCloseBtn.onclick = () => {
+                    modalOverlay.style.display = "none";
+                    if (!isConfirm) resolve(true); // For simple alerts (OK means true)
+                    else resolve(false); // For confirms (Cancel means false)
+                };
+
+                if (isConfirm) {
+                    modalConfirmBtn.onclick = () => {
+                        modalOverlay.style.display = "none";
+                        resolve(true); // Confirm means true
+                    };
+                }
+            });
+        }
+        // -----------------------------------------------------------
+
+
         document.addEventListener("DOMContentLoaded", () => {
             // 🛑 IMPORTANT: YOUR SUPABASE KEYS ARE HERE 🛑
             const SUPABASE_URL = "https://ywivqcxjtvmztktwlepj.supabase.co";
@@ -342,11 +424,18 @@
 
                 // Camera management
                 if (tabName === 'LiveCamTab') {
-                    startCamera();
-                    toggleCameraBtn.textContent = "Turn Camera Off";
+                    // Start camera ONLY if permissions were previously granted. 
+                    // We don't want to auto-request on every tab switch.
+                    if (cameraStream === null && toggleCameraBtn.textContent === "Turn Camera Off") {
+                         // Attempt to start camera (it will fail silently if permissions were revoked, 
+                         // or succeed if stream was stopped by switching tabs)
+                        startCamera();
+                    } else if (cameraStream === null && toggleCameraBtn.textContent === "Turn Camera On") {
+                        // User needs to click the button or grant permission first
+                        camera.poster = "https://placehold.co/600x400/333/fff?text=Camera+is+Off";
+                    }
                 } else {
                     stopCamera();
-                    toggleCameraBtn.textContent = "Turn Camera On";
                 }
             }
             // -------------------------------------------------------------------
@@ -358,26 +447,33 @@
             // ------------------- LOGOUT -------------------
             logoutBtn.addEventListener("click", async () => {
                 await sb.auth.signOut();
-                window.location.href = "login.html";
+                // Redirection is handled by onAuthStateChange listener now
             });
 
             // ------------------- FILE UPLOAD -------------------
             uploadBtn.addEventListener("click", async () => {
                 const file = fileInput.files[0];
-                if (!file) return alert("Choose a file first");
+                if (!file) return showModal("Please choose a file first.", false);
 
                 const { data: { session } } = await sb.auth.getSession();
-                if (!session) return alert("Not logged in");
+                if (!session) return showModal("You must be logged in to upload files.", false);
 
                 const safeName = sanitize(file.name);
                 const path = `${session.user.id}/${Date.now()}-${safeName}`;
 
+                // Disable button during upload to prevent double-click
+                uploadBtn.disabled = true;
+                uploadBtn.textContent = "Uploading...";
+
                 const { error } = await sb.storage.from("user-uploads").upload(path, file, { upsert: false });
 
+                uploadBtn.disabled = false;
+                uploadBtn.textContent = "Upload";
+
                 if (error) {
-                    alert("Upload failed: " + error.message);
+                    showModal("Upload failed: " + error.message, false);
                 } else {
-                    alert("File uploaded!");
+                    showModal("File uploaded successfully!", false);
                     fileInput.value = ''; // Clear file input
                     loadFiles();
                     loadStorageUsage();
@@ -390,73 +486,96 @@
                 if (!session) return;
 
                 const { data, error } = await sb.storage.from("user-uploads").list(session.user.id, { limit: 100 });
-                if (error) return console.error(error);
+                if (error) return console.error("Error loading files:", error);
 
+                // Clear lists before re-rendering
                 photoList.innerHTML = "";
                 videoList.innerHTML = "";
 
-                for (const file of data) {
+                // Use Promise.all to fetch all signed URLs concurrently for performance
+                const filePromises = data.map(async (file) => {
+                    const fullPath = `${session.user.id}/${file.name}`;
                     const { data: signed } = await sb.storage
                         .from("user-uploads")
-                        .createSignedUrl(`${session.user.id}/${file.name}`, 60 * 60);
+                        .createSignedUrl(fullPath, 60 * 60);
+                    return { ...file, signedUrl: signed?.signedUrl, fullPath };
+                });
+
+                const filesWithUrls = await Promise.all(filePromises);
+
+                for (const file of filesWithUrls) {
+                    if (!file.signedUrl) continue;
 
                     const div = document.createElement("div");
                     div.className = "file-card";
 
                     let targetList;
-                    let isMedia = false;
+                    let mediaElement = null;
 
                     // Determine file type and target list
                     if (file.name.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
-                        const img = document.createElement("img");
-                        img.src = signed?.signedUrl || "";
-                        div.appendChild(img);
+                        mediaElement = document.createElement("img");
+                        mediaElement.src = file.signedUrl;
+                        mediaElement.alt = file.name;
                         targetList = photoList;
-                        isMedia = true;
                     } else if (file.name.match(/\.(mp4|mov|avi|webm)$/i)) {
-                        const video = document.createElement("video");
-                        video.src = signed?.signedUrl || "";
-                        video.controls = true;
-                        div.appendChild(video);
+                        mediaElement = document.createElement("video");
+                        mediaElement.src = file.signedUrl;
+                        mediaElement.controls = true;
                         targetList = videoList;
-                        isMedia = true;
+                    } else {
+                        // Skip files that aren't images or videos (e.g., directories, other files)
+                        continue;
                     }
 
-                    if (isMedia) {
-                        const link = document.createElement("a");
-                        link.href = signed?.signedUrl || "#";
-                        link.textContent = file.name;
-                        link.target = "_blank";
-                        div.appendChild(link);
+                    div.appendChild(mediaElement);
 
-                        const delBtn = document.createElement("button");
-                        delBtn.textContent = "Delete";
-                        delBtn.onclick = async () => {
-                            if (!confirm(`Are you sure you want to delete ${file.name}?`)) return;
-                            await sb.storage.from("user-uploads").remove([`${session.user.id}/${file.name}`]);
-                            loadFiles();
+                    const link = document.createElement("a");
+                    link.href = file.signedUrl;
+                    link.textContent = file.name;
+                    link.target = "_blank";
+                    div.appendChild(link);
+
+                    const delBtn = document.createElement("button");
+                    delBtn.className = "delete-btn";
+                    delBtn.textContent = "Delete";
+                    delBtn.onclick = async () => {
+                        const confirmed = await showModal(`Are you sure you want to delete ${file.name}? This action is irreversible.`, true);
+                        if (!confirmed) return;
+
+                        const { error: deleteError } = await sb.storage.from("user-uploads").remove([file.fullPath]);
+
+                        if (deleteError) {
+                            showModal("Delete failed: " + deleteError.message, false);
+                        } else {
+                            loadFiles(); // Reload the list
                             loadStorageUsage();
-                        };
-                        div.appendChild(delBtn);
+                        }
+                    };
+                    div.appendChild(delBtn);
 
-                        targetList.appendChild(div);
-                    }
+                    targetList.appendChild(div);
                 }
             }
 
             // ------------------- CAMERA LOGIC -------------------
             function startCamera() {
                 if (cameraStream) return;
+                
+                // Clear any previous poster image
+                camera.removeAttribute('poster');
 
-                navigator.mediaDevices.getUserMedia({ video: true })
+                navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } })
                     .then(stream => {
                         camera.srcObject = stream;
                         cameraStream = stream;
                         camera.play();
+                        toggleCameraBtn.textContent = "Turn Camera Off";
                     })
                     .catch(err => {
                         console.error("Camera access failed:", err);
-                        // Optional: Alert user that camera failed to start
+                        showModal("Camera access failed. Check permissions in browser settings.", false);
+                        toggleCameraBtn.textContent = "Turn Camera On"; // Reset button text if starting fails
                     });
             }
 
@@ -465,14 +584,19 @@
                     cameraStream.getTracks().forEach(track => track.stop());
                     camera.srcObject = null;
                     cameraStream = null;
+                    camera.poster = "https://placehold.co/600x400/333/fff?text=Camera+is+Off";
+                    toggleCameraBtn.textContent = "Turn Camera On";
                 }
             }
 
             captureBtn.addEventListener("click", async () => {
                 if (!cameraStream) {
-                    alert("Camera is off or access was denied. Please ensure camera is on and permissions are granted.");
+                    showModal("Camera is off or access was denied. Please ensure camera is on and permissions are granted.", false);
                     return;
                 }
+
+                captureBtn.disabled = true;
+                captureBtn.textContent = "Capturing...";
 
                 const ctx = canvas.getContext("2d");
                 const width = camera.videoWidth;
@@ -486,17 +610,24 @@
                     const file = new File([blob], `camera-${Date.now()}.png`, { type: "image/png" });
 
                     const { data: { session } } = await sb.auth.getSession();
-                    if (!session) return alert("Not logged in");
+                    if (!session) {
+                        captureBtn.disabled = false;
+                        captureBtn.textContent = "Take Picture";
+                        return showModal("Not logged in", false);
+                    }
 
                     const path = `${session.user.id}/${file.name}`;
                     const { error } = await sb.storage.from("user-uploads").upload(path, file);
 
+                    captureBtn.disabled = false;
+                    captureBtn.textContent = "Take Picture";
+
                     if (error) {
-                        alert("Upload failed: " + error.message);
+                        showModal("Upload failed: " + error.message, false);
                     } else {
                         loadFiles();
                         loadStorageUsage();
-                        alert("Snapshot uploaded!");
+                        showModal("Snapshot uploaded successfully!", false);
                     }
                 }, "image/png");
             });
@@ -514,20 +645,20 @@
             cameraPermissionBtn.addEventListener("click", async () => {
                 try {
                     const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                    alert("✅ Camera access granted! You can now use the Live Cam tab.");
+                    showModal("✅ Camera access granted! You can now use the Live Cam tab.", false);
                     stream.getTracks().forEach(track => track.stop());
+                    toggleCameraBtn.textContent = "Turn Camera Off"; // Assume user wants it ready to go
                 } catch (err) {
-                    alert("❌ Camera access denied. Check your browser settings.");
+                    showModal("❌ Camera access denied. Check your browser settings.", false);
+                    toggleCameraBtn.textContent = "Turn Camera On";
                 }
             });
 
             toggleCameraBtn.addEventListener("click", () => {
                 if (cameraStream) {
                     stopCamera();
-                    toggleCameraBtn.textContent = "Turn Camera On"; // Corrected text
                 } else {
                     startCamera();
-                    toggleCameraBtn.textContent = "Turn Camera Off"; // Corrected text
                 }
             });
 
@@ -538,10 +669,8 @@
                     return;
                 }
 
-                // Note: Supabase Storage currently doesn't provide a direct "total storage used" endpoint.
-                // The below function calculates the total by summing up the sizes of files listed.
-                // This is an *approximation* and depends on the API returning the size accurately.
-
+                // Supabase Storage currently doesn't provide a direct "total storage used" endpoint.
+                // This calculates the total by summing up the sizes of files listed (approximation).
                 const { data, error } = await sb.storage.from("user-uploads").list(session.user.id, { limit: 1000 });
                 if (error) {
                     console.error("Error loading storage usage:", error);
@@ -551,44 +680,59 @@
 
                 let totalBytes = 0;
                 for (const file of data) {
-                    // Supabase list() returns metadata with size for uploaded files
                     totalBytes += file.metadata?.size || 0;
                 }
 
                 const usedMB = (totalBytes / (1024 * 1024)).toFixed(2);
-                const totalMB = (MAX_STORAGE / (1024 * 1024)).toFixed(0);
-                storageInfo.textContent = `${usedMB} MB / ${totalMB} MB used`;
+                const totalGB = (MAX_STORAGE / (1024 * 1024 * 1024)).toFixed(0);
+                storageInfo.textContent = `${usedMB} MB / ${totalGB} GB used`;
             }
 
-            // ------------------- 🚀 CORRECTED INITIALIZATION LOGIC 🚀 -------------------
-            // This replaces the old (async () => { ... })(); block that caused the loop.
+            // ------------------- 🚀 CRITICAL FIX: INITIALIZATION LOGIC 🚀 -------------------
+            let initialLoad = true;
             sb.auth.onAuthStateChange((event, session) => {
+                // event can be 'INITIAL_SESSION', 'SIGNED_IN', 'SIGNED_OUT', 'TOKEN_REFRESHED'
                 console.log("Auth State Event:", event, session ? "Session Exists" : "No Session");
             
-                // 1. A valid session is found (after Google login redirect or existing session)
                 if (session) {
+                    // 1. A valid session is found (after Google login redirect or existing session)
                     if (userEmailDisplay) {
                         userEmailDisplay.textContent = `Welcome, ${session.user.email}!`;
                     }
                     
                     // Load your app content
-                    loadFiles();
-                    loadStorageUsage();
+                    if (initialLoad) {
+                        loadFiles();
+                        loadStorageUsage();
+                        initialLoad = false;
+                    }
                     
-                    // CRITICAL FIX: Clear the URL fragment after processing the tokens.
-                    // This stops the browser from constantly re-processing the tokens on refresh.
+                    // CRITICAL FIX: Clear the URL fragment after processing the tokens from a redirect.
+                    // This is what stops the infinite loop/refresh.
                     if (window.location.hash.includes("access_token")) {
+                        console.log("Clearing URL hash to prevent loop/re-processing.");
                         window.history.replaceState(null, null, window.location.pathname);
                     }
                 } else {
-                    // 2. No session found. Redirect to login only when necessary.
-                    // 'SIGNED_OUT' is when user explicitly logs out.
-                    // 'INITIAL_SESSION' is when page loads and no session is found.
+                    // 2. No session found. Redirect to login only when absolutely necessary.
                     if (event === 'SIGNED_OUT' || event === 'INITIAL_SESSION') {
-                        window.location.href = "login.html";
+                        // Only redirect if we are not already on the login page (prevents a different kind of loop)
+                        if (window.location.pathname.indexOf("login.html") === -1) {
+                            window.location.href = "login.html";
+                        }
                     }
                 }
             });
+            // ---------------------------------------------------------------------------------
+
+            // Initialize camera based on the currently active tab (which is PhotosTab by default)
+            const activeTabName = document.querySelector('.main-content-area.active').id;
+            if (activeTabName === 'LiveCamTab') {
+                startCamera();
+            } else {
+                 // Set initial button text correctly if camera is not running (default state)
+                 toggleCameraBtn.textContent = "Turn Camera On";
+            }
         });
     </script>
 </body>
